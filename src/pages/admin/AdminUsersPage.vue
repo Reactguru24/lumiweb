@@ -35,17 +35,18 @@ async function disableUser(id: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-semibold">User Management</h1>
-      <div class="relative">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-xl sm:text-2xl font-semibold">User Management</h1>
+      <div class="relative w-full sm:w-auto">
         <MagnifyingGlassIcon class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input v-model="search" placeholder="Search users..." class="input-field pl-10 py-2 text-sm w-64" />
+        <input v-model="search" placeholder="Search users..." class="input-field pl-10 py-2 text-sm w-full sm:w-64" />
       </div>
     </div>
 
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 8" :key="i" class="skeleton h-14" /></div>
     <div v-else class="card overflow-hidden">
-      <table class="w-full text-sm">
+      <div class="table-responsive">
+      <table class="data-table">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr><th class="text-left p-4">Name</th><th class="text-left p-4 hidden md:table-cell">Email</th><th class="text-left p-4">Role</th><th class="text-left p-4 hidden md:table-cell">Joined</th><th class="text-left p-4">Status</th><th class="text-right p-4">Actions</th></tr>
         </thead>
@@ -62,6 +63,7 @@ async function disableUser(id: string) {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     <Pagination v-if="!isLoading" :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @update:page="goTo" />
   </div>

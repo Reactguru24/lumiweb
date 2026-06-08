@@ -47,7 +47,7 @@ function remove(productId: string, size: string, color: string) {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="page-container">
     <h1 class="section-title mb-8">Shopping Cart</h1>
 
     <EmptyState
@@ -60,13 +60,13 @@ function remove(productId: string, size: string, color: string) {
 
     <div v-else class="grid lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2 space-y-4">
-        <div v-for="item in cartProducts" :key="`${item.productId}-${item.size}-${item.color}`" class="card p-4 flex gap-4">
-          <img :src="item.product.images[0]" :alt="item.product.name" class="w-24 h-32 object-cover" />
-          <div class="flex-1">
-            <h3 class="font-medium">{{ item.product.name }}</h3>
-            <p class="text-sm text-gray-500">{{ item.product.brand }} · {{ item.size }} · {{ item.color }}</p>
+        <div v-for="item in cartProducts" :key="`${item.productId}-${item.size}-${item.color}`" class="card p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <img :src="item.product.images[0]" :alt="item.product.name" class="w-full sm:w-24 h-40 sm:h-32 object-cover shrink-0" />
+          <div class="flex-1 min-w-0">
+            <h3 class="font-medium text-sm sm:text-base line-clamp-2">{{ item.product.name }}</h3>
+            <p class="text-xs sm:text-sm text-gray-500 mt-1">{{ item.product.brand }} · {{ item.size }} · {{ item.color }}</p>
             <p class="font-semibold mt-2">{{ formatCurrency(item.product.price * (1 - item.product.discount / 100)) }}</p>
-            <div class="flex items-center gap-4 mt-3">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
               <div class="flex items-center border border-gray-300 dark:border-gray-700 text-sm">
                 <button class="px-3 py-1" @click="cart.updateQuantity(item.productId, item.size, item.color, item.quantity - 1); refresh()">−</button>
                 <span class="px-3 py-1 border-x border-gray-300 dark:border-gray-700">{{ item.quantity }}</span>
@@ -89,7 +89,7 @@ function remove(productId: string, size: string, color: string) {
       </div>
 
       <!-- Summary -->
-      <div class="card p-6 h-fit sticky top-24">
+      <div class="card p-4 sm:p-6 h-fit lg:sticky lg:top-24">
         <h2 class="font-semibold mb-4">Order Summary</h2>
         <div class="space-y-3 text-sm">
           <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span>{{ formatCurrency(subtotal) }}</span></div>

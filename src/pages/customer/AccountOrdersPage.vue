@@ -49,7 +49,7 @@ watch(filter, () => reset())
 
     <div v-else class="space-y-4">
       <div v-for="order in paginated" :key="order.id" class="card p-4">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div>
             <p class="font-medium text-sm">Order #{{ order.id.slice(-8) }}</p>
             <p class="text-xs text-gray-500">{{ formatDate(order.createdAt) }}</p>

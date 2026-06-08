@@ -89,14 +89,14 @@ async function placeOrder() {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto px-4 py-8">
-    <h1 class="section-title mb-8">Checkout</h1>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full min-w-0">
+    <h1 class="section-title mb-6 sm:mb-8">Checkout</h1>
 
     <!-- Steps -->
-    <div class="flex items-center justify-center gap-2 mb-10">
-      <div v-for="s in 4" :key="s" class="flex items-center">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium" :class="step >= s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-800 text-gray-500'">{{ s }}</div>
-        <div v-if="s < 4" class="w-12 h-0.5" :class="step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'" />
+    <div class="flex items-center justify-center gap-1 sm:gap-2 mb-8 sm:mb-10 overflow-x-auto pb-1">
+      <div v-for="s in 4" :key="s" class="flex items-center shrink-0">
+        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium" :class="step >= s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-800 text-gray-500'">{{ s }}</div>
+        <div v-if="s < 4" class="w-6 sm:w-12 h-0.5" :class="step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'" />
       </div>
     </div>
 
@@ -137,7 +137,7 @@ async function placeOrder() {
     <!-- Step 3: Payment -->
     <div v-if="step === 3" class="animate-slide-up">
       <h2 class="font-semibold text-lg mb-4">Payment Method</h2>
-      <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <button
           v-for="pm in paymentMethods" :key="pm"
           class="card p-4 text-center text-sm font-medium transition-all"
@@ -164,7 +164,7 @@ async function placeOrder() {
       <h2 class="font-display text-2xl font-semibold mb-2">Order Confirmed!</h2>
       <p class="text-gray-500 mb-2">Thank you for your purchase.</p>
       <p class="text-sm text-gray-400 mb-8">Order ID: {{ orderId }}</p>
-      <div class="flex gap-4 justify-center">
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
         <router-link to="/account/orders" class="btn-primary">View Orders</router-link>
         <router-link to="/products" class="btn-secondary">Continue Shopping</router-link>
       </div>

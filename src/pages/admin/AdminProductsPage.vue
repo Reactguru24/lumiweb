@@ -29,8 +29,9 @@ async function moderate(id: string, status: ProductStatus) {
   <div>
     <h1 class="text-2xl font-semibold mb-6">Product Moderation</h1>
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 8" :key="i" class="skeleton h-14" /></div>
-    <div v-else class="card overflow-x-auto">
-      <table class="w-full text-sm">
+    <div v-else class="card overflow-hidden">
+      <div class="table-responsive">
+      <table class="data-table">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr><th class="text-left p-4">Product</th><th class="text-left p-4 hidden md:table-cell">Brand</th><th class="text-left p-4">Price</th><th class="text-left p-4">Status</th><th class="text-right p-4">Actions</th></tr>
         </thead>
@@ -53,6 +54,7 @@ async function moderate(id: string, status: ProductStatus) {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     <Pagination v-if="!isLoading" :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @update:page="goTo" />
   </div>

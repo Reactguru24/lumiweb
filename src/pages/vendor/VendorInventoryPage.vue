@@ -52,9 +52,10 @@ const { data: analytics } = useQuery({
         <p v-else class="text-gray-500 text-sm">No out-of-stock products.</p>
       </div>
 
-      <div class="card p-6 md:col-span-2">
+      <div class="card p-4 sm:p-6 md:col-span-2">
         <h2 class="font-semibold mb-4">Product Performance</h2>
-        <table class="w-full text-sm">
+        <div class="table-responsive">
+        <table class="data-table">
           <thead><tr class="text-left text-gray-500"><th class="pb-2">Product</th><th class="pb-2">Price</th><th class="pb-2">Stock</th><th class="pb-2">Rating</th><th class="pb-2">Reviews</th></tr></thead>
           <tbody>
             <tr v-for="p in analytics.topProducts" :key="p.name" class="border-t border-gray-200 dark:border-gray-800">
@@ -66,6 +67,7 @@ const { data: analytics } = useQuery({
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   </div>

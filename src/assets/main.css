@@ -60,6 +60,22 @@
     @apply inline-flex items-center gap-1 rounded-sm border border-gray-200 bg-gray-50 p-0.5;
     @apply dark:border-gray-700 dark:bg-gray-900/80;
   }
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full min-w-0;
+  }
+  .page-width {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 w-full min-w-0;
+  }
+  .table-responsive {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table {
+    @apply w-full text-sm min-w-[640px];
+  }
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
 
 ::-webkit-scrollbar {

@@ -78,9 +78,9 @@ async function removeProduct(id: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-semibold">Products</h1>
-      <button class="btn-primary text-sm py-2 flex items-center gap-2" @click="showForm = true; editingId = null">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-xl sm:text-2xl font-semibold">Products</h1>
+      <button class="btn-primary text-sm py-2 flex items-center justify-center gap-2 w-full sm:w-auto" @click="showForm = true; editingId = null">
         <PlusIcon class="w-4 h-4" /> Add Product
       </button>
     </div>
@@ -111,7 +111,8 @@ async function removeProduct(id: string) {
 
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 5" :key="i" class="skeleton h-16" /></div>
     <div v-else class="card overflow-hidden">
-      <table class="w-full text-sm">
+      <div class="table-responsive">
+      <table class="data-table">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr>
             <th class="text-left p-4">Product</th>
@@ -142,6 +143,7 @@ async function removeProduct(id: string) {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
     <Pagination v-if="!isLoading && total > 0" :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @update:page="goTo" />
   </div>

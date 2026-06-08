@@ -78,7 +78,7 @@ const promos = computed(() => [
 
     <!-- Promo blocks -->
     <section class="border-b border-gray-200 dark:border-gray-800 bg-brand-50 dark:bg-gray-900">
-      <div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="page-width py-6 sm:py-8 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
         <div v-for="promo in promos" :key="promo.title" class="text-center">
           <span class="text-2xl mb-2 block">{{ promo.icon }}</span>
           <h3 class="font-medium text-sm">{{ promo.title }}</h3>
@@ -88,8 +88,8 @@ const promos = computed(() => [
     </section>
 
     <!-- Featured -->
-    <section class="max-w-7xl mx-auto px-4 py-12">
-      <div class="flex items-center justify-between mb-8">
+    <section class="page-width py-8 sm:py-12">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
         <div>
           <p class="micro-label mb-1">Curated for you</p>
           <h2 class="section-title">Featured Products</h2>
@@ -106,10 +106,10 @@ const promos = computed(() => [
 
     <!-- East Africa banner -->
     <section class="bg-brand-teal text-white py-16">
-      <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-8 items-center">
+      <div class="page-width grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
         <div>
           <p class="micro-label !text-brand-orange mb-2">Made for East Africa</p>
-          <h2 class="font-display text-3xl md:text-4xl font-semibold mb-4">Fashion From Nairobi to Kampala</h2>
+          <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-semibold mb-4">Fashion From Nairobi to Kampala</h2>
           <p class="text-brand-100 mb-6">Shop local brands and international labels from verified vendors across Kenya, Uganda, Tanzania, Rwanda, and Ethiopia.</p>
           <router-link :to="{ name: 'products', query: { trending: 'true' } }" class="btn-primary bg-brand-orange border-brand-orange hover:bg-brand-orange/90">Explore Trends</router-link>
         </div>
@@ -123,7 +123,7 @@ const promos = computed(() => [
     </section>
 
     <!-- Trending -->
-    <section class="max-w-7xl mx-auto px-4 py-12">
+    <section class="page-width py-8 sm:py-12">
       <p class="micro-label mb-1">What's hot</p>
       <h2 class="section-title mb-8">Trending in Kenya</h2>
       <LoadingSkeleton v-if="loadingTrending" />
@@ -133,7 +133,7 @@ const promos = computed(() => [
     </section>
 
     <!-- Best Sellers -->
-    <section class="max-w-7xl mx-auto px-4 py-12">
+    <section class="page-width py-8 sm:py-12">
       <p class="micro-label mb-1">Customer favourites</p>
       <h2 class="section-title mb-8">Best Sellers</h2>
       <LoadingSkeleton v-if="loadingBest" />
@@ -144,7 +144,7 @@ const promos = computed(() => [
 
     <!-- New Arrivals -->
     <section class="bg-brand-50 dark:bg-gray-900 py-12">
-      <div class="max-w-7xl mx-auto px-4">
+      <div class="page-width">
         <p class="micro-label mb-1">Just landed</p>
         <h2 class="section-title mb-8">New Arrivals</h2>
         <LoadingSkeleton v-if="loadingNew" />
@@ -155,7 +155,7 @@ const promos = computed(() => [
     </section>
 
     <!-- Top Vendors -->
-    <section class="max-w-7xl mx-auto px-4 py-12">
+    <section class="page-width py-8 sm:py-12">
       <p class="micro-label mb-1">Shop local</p>
       <h2 class="section-title mb-8">Top Vendors</h2>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -174,13 +174,13 @@ const promos = computed(() => [
     </section>
 
     <!-- Sale banner -->
-    <section class="max-w-7xl mx-auto px-4 py-12 mb-8">
+    <section class="page-width py-8 sm:py-12 mb-4 sm:mb-8">
       <div class="relative overflow-hidden rounded-sm">
         <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=1600&q=80" alt="Season sale" class="w-full h-48 md:h-64 object-cover" />
         <div class="absolute inset-0 bg-brand-teal/80 flex items-center justify-center text-center text-white">
           <div>
             <p class="micro-label !text-brand-orange mb-2">Season Sale</p>
-            <h2 class="font-display text-3xl font-semibold mb-4">Up to 40% Off Selected Styles</h2>
+            <h2 class="font-display text-xl sm:text-3xl font-semibold mb-4 px-4">Up to 40% Off Selected Styles</h2>
             <router-link :to="{ name: 'products', query: { onSale: 'true' } }" class="btn-primary bg-brand-orange border-brand-orange">Shop Sale</router-link>
           </div>
         </div>

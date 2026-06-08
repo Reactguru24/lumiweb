@@ -17,9 +17,9 @@ const inWishlist = computed(() => cart.isInWishlist(props.product.id))
 <template>
   <div
     class="group relative animate-fade-in"
-    :class="listView ? 'flex gap-4 card p-4' : ''"
+    :class="listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 card p-3 sm:p-4' : ''"
   >
-    <router-link :to="`/products/${product.id}`" class="block overflow-hidden" :class="listView ? 'w-32 shrink-0' : ''">
+    <router-link :to="`/products/${product.id}`" class="block overflow-hidden" :class="listView ? 'w-full sm:w-32 shrink-0' : ''">
       <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800">
         <img
           :src="product.images[0]"
@@ -36,10 +36,10 @@ const inWishlist = computed(() => cart.isInWishlist(props.product.id))
       </div>
     </router-link>
 
-    <div :class="listView ? 'flex-1 flex flex-col justify-center' : 'mt-3'">
+    <div :class="listView ? 'flex-1 flex flex-col justify-center min-w-0' : 'mt-3'">
       <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ product.brand }}</p>
       <router-link :to="`/products/${product.id}`">
-        <h3 class="font-medium text-gray-900 dark:text-white mt-1 group-hover:underline">{{ product.name }}</h3>
+        <h3 class="font-medium text-sm sm:text-base text-gray-900 dark:text-white mt-1 group-hover:underline line-clamp-2">{{ product.name }}</h3>
       </router-link>
       <div class="flex items-center gap-1 mt-1">
         <StarIcon class="w-3.5 h-3.5 text-yellow-400" />

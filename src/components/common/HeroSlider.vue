@@ -32,7 +32,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="relative h-[65vh] md:h-[75vh] overflow-hidden bg-gray-900">
+  <section class="relative min-h-[420px] h-[55vh] sm:h-[60vh] md:h-[75vh] overflow-hidden bg-gray-900">
     <div
       v-for="(slide, i) in slides"
       :key="slide.label"
@@ -44,8 +44,8 @@ onUnmounted(() => {
       <div class="absolute inset-0 flex items-center">
         <div class="max-w-7xl mx-auto px-4 w-full text-white">
           <p class="micro-label text-brand-orange mb-3">{{ slide.label }}</p>
-          <h1 class="font-display text-4xl md:text-6xl font-semibold mb-4 max-w-xl leading-tight">{{ slide.title }}</h1>
-          <p class="text-lg text-gray-200 mb-8 max-w-md">{{ slide.subtitle }}</p>
+          <h1 class="font-display text-2xl sm:text-4xl md:text-6xl font-semibold mb-3 sm:mb-4 max-w-xl leading-tight">{{ slide.title }}</h1>
+          <p class="text-sm sm:text-lg text-gray-200 mb-6 sm:mb-8 max-w-md line-clamp-3 sm:line-clamp-none">{{ slide.subtitle }}</p>
           <router-link :to="slide.link" class="btn-primary bg-brand-orange text-white border-brand-orange hover:bg-brand-orange/90">
             Shop Collection
           </router-link>
@@ -53,11 +53,11 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <button class="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full text-white" aria-label="Previous slide" @click="prev">
-      <ChevronLeftIcon class="w-6 h-6" />
+    <button class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-1.5 sm:p-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full text-white" aria-label="Previous slide" @click="prev">
+      <ChevronLeftIcon class="w-5 h-5 sm:w-6 sm:h-6" />
     </button>
-    <button class="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full text-white" aria-label="Next slide" @click="next">
-      <ChevronRightIcon class="w-6 h-6" />
+    <button class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-1.5 sm:p-2 bg-white/20 hover:bg-white/30 backdrop-blur rounded-full text-white" aria-label="Next slide" @click="next">
+      <ChevronRightIcon class="w-5 h-5 sm:w-6 sm:h-6" />
     </button>
 
     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">

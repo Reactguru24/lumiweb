@@ -58,7 +58,7 @@ function addToCart() {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="page-container">
     <LoadingSkeleton v-if="isLoading" :count="1" height="500px" />
 
     <div v-else-if="product" class="grid md:grid-cols-2 gap-8 md:gap-12">
@@ -83,7 +83,7 @@ function addToCart() {
       <!-- Details -->
       <div class="animate-slide-up">
         <p class="text-sm text-gray-500 uppercase tracking-wider">{{ product.brand }}</p>
-        <h1 class="font-display text-3xl font-semibold mt-1">{{ product.name }}</h1>
+        <h1 class="font-display text-2xl sm:text-3xl font-semibold mt-1">{{ product.name }}</h1>
         <div class="flex items-center gap-2 mt-2">
           <div class="flex">
             <StarIcon v-for="i in 5" :key="i" class="w-4 h-4" :class="i <= Math.round(product.rating) ? 'text-yellow-400' : 'text-gray-300'" />
@@ -142,17 +142,19 @@ function addToCart() {
         </p>
 
         <!-- Quantity & Actions -->
-        <div class="flex items-center gap-4 mt-6">
-          <div class="flex items-center border border-gray-300 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-6">
+          <div class="flex items-center border border-gray-300 dark:border-gray-700 w-fit">
             <button class="px-4 py-3" @click="quantity = Math.max(1, quantity - 1)">−</button>
             <span class="px-4 py-3 border-x border-gray-300 dark:border-gray-700">{{ quantity }}</span>
             <button class="px-4 py-3" @click="quantity++">+</button>
           </div>
-          <button class="btn-primary flex-1" :disabled="product.stock === 0" @click="addToCart">Add to Cart</button>
-          <button class="p-3 border border-gray-300 dark:border-gray-700" @click="cart.toggleWishlist(product.id)">
+          <div class="flex gap-2 sm:gap-4 flex-1">
+            <button class="btn-primary flex-1 min-w-0" :disabled="product.stock === 0" @click="addToCart">Add to Cart</button>
+            <button class="p-3 border border-gray-300 dark:border-gray-700 shrink-0" @click="cart.toggleWishlist(product.id)">
             <HeartSolid v-if="inWishlist" class="w-6 h-6 text-red-500" />
             <HeartIcon v-else class="w-6 h-6" />
-          </button>
+            </button>
+          </div>
         </div>
       </div>
     </div>

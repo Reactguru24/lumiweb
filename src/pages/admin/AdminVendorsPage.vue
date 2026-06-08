@@ -45,8 +45,8 @@ async function suspend(id: string) {
 
     <div v-if="tab === 'applications'" class="space-y-4">
       <div v-for="app in applications" :key="app.id" class="card p-6">
-        <div class="flex items-start justify-between mb-4">
-          <div class="flex items-center gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+          <div class="flex items-center gap-3 sm:gap-4 min-w-0">
             <img :src="app.logo" class="w-12 h-12 rounded-full object-cover" :alt="app.storeName" />
             <div>
               <h3 class="font-semibold">{{ app.storeName }}</h3>
@@ -64,16 +64,19 @@ async function suspend(id: string) {
           <p>Risk Status: <span class="capitalize font-medium">{{ app.riskStatus }}</span></p>
           <p>Submitted: {{ formatDate(app.submittedAt) }}</p>
         </div>
-        <div v-if="app.status === 'pending'" class="flex items-center gap-3">
-          <input v-model="reviewNote" placeholder="Review note (optional)" class="input-field text-sm py-2 flex-1" />
-          <button class="btn-primary text-sm py-2" @click="approve(app.id)">Approve</button>
-          <button class="btn-secondary text-sm py-2 text-red-600 border-red-600" @click="reject(app.id)">Reject</button>
+        <div v-if="app.status === 'pending'" class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <input v-model="reviewNote" placeholder="Review note (optional)" class="input-field text-sm py-2 flex-1 min-w-0" />
+          <div class="flex gap-2 shrink-0">
+            <button class="btn-primary text-sm py-2 flex-1 sm:flex-none" @click="approve(app.id)">Approve</button>
+            <button class="btn-secondary text-sm py-2 text-red-600 border-red-600 flex-1 sm:flex-none" @click="reject(app.id)">Reject</button>
+          </div>
         </div>
       </div>
     </div>
 
     <div v-else class="card overflow-hidden">
-      <table class="w-full text-sm">
+      <div class="table-responsive">
+      <table class="data-table">
         <thead class="bg-gray-50 dark:bg-gray-800">
           <tr><th class="text-left p-4">Store</th><th class="text-left p-4 hidden md:table-cell">Location</th><th class="text-left p-4">Products</th><th class="text-left p-4">Rating</th><th class="text-right p-4">Actions</th></tr>
         </thead>
@@ -94,6 +97,7 @@ async function suspend(id: string) {
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

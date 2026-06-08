@@ -42,7 +42,7 @@ async function updateStatus(orderId: string, status: OrderStatus) {
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 5" :key="i" class="skeleton h-24" /></div>
     <div v-else-if="orders?.length" class="space-y-4">
       <div v-for="order in paginated" :key="order.id" class="card p-4">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
           <div>
             <p class="font-medium text-sm">#{{ order.id.slice(-8) }}</p>
             <p class="text-xs text-gray-500">{{ formatDate(order.createdAt) }}</p>
@@ -59,9 +59,9 @@ async function updateStatus(orderId: string, status: OrderStatus) {
             <span class="font-medium">{{ formatCurrency(item.price * item.quantity) }}</span>
           </div>
         </div>
-        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
-          <span class="text-xs text-gray-500 mr-auto">Update status:</span>
-          <button v-for="s in statuses" :key="s" class="px-2 py-1 text-xs border capitalize" :class="order.status === s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : ''" @click="updateStatus(order.id, s)">{{ s }}</button>
+        <div class="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+          <span class="text-xs text-gray-500 w-full sm:w-auto sm:mr-auto">Update status:</span>
+          <button v-for="s in statuses" :key="s" class="px-2 py-1 text-xs border capitalize shrink-0" :class="order.status === s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : ''" @click="updateStatus(order.id, s)">{{ s }}</button>
         </div>
       </div>
     </div>

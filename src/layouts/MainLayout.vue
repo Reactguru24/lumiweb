@@ -50,19 +50,20 @@ async function handleLogout() {
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <div class="bg-brand-teal text-white text-center text-xs py-2 tracking-wider font-medium">
-      FREE DELIVERY ON ORDERS OVER {{ currencyStore.format(currencyStore.freeShippingThresholdKes) }} · M-PESA ACCEPTED · SHOP KENYAN BRANDS
+    <div class="bg-brand-teal text-white text-center text-[10px] sm:text-xs py-2 px-2 tracking-wide font-medium">
+      <span class="sm:hidden">Free delivery over {{ currencyStore.format(currencyStore.freeShippingThresholdKes) }} · M-Pesa</span>
+      <span class="hidden sm:inline">FREE DELIVERY ON ORDERS OVER {{ currencyStore.format(currencyStore.freeShippingThresholdKes) }} · M-PESA ACCEPTED · SHOP KENYAN BRANDS</span>
     </div>
 
     <header class="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-b border-gray-200 dark:border-gray-800">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
-          <button class="lg:hidden p-2" @click="mobileMenuOpen = !mobileMenuOpen">
+      <div class="page-width">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+          <button class="lg:hidden p-2 shrink-0" @click="mobileMenuOpen = !mobileMenuOpen">
             <XMarkIcon v-if="mobileMenuOpen" class="w-6 h-6" />
             <Bars3Icon v-else class="w-6 h-6" />
           </button>
 
-          <AppLogo size="sm" class="lg:mr-8" />
+          <AppLogo size="sm" class="lg:mr-8 shrink-0 min-w-0" />
 
           <nav class="hidden lg:flex items-center gap-8 flex-1">
             <div
@@ -100,7 +101,7 @@ async function handleLogout() {
             </div>
           </form>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
             <AppearanceControls />
             <router-link v-if="auth.isAuthenticated" :to="auth.getDashboardRoute()" class="hidden md:block p-2">
               <UserIcon class="w-5 h-5" />
@@ -145,7 +146,7 @@ async function handleLogout() {
     </main>
 
     <footer class="bg-gray-900 dark:bg-gray-950 text-gray-400 py-12 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div class="page-width grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
         <div>
           <AppLogo light class="mb-4" />
           <p class="text-sm">East Africa's premier fashion marketplace — shop Kenya, Uganda, Tanzania & beyond.</p>
@@ -176,7 +177,7 @@ async function handleLogout() {
           </ul>
         </div>
       </div>
-      <div class="max-w-7xl mx-auto px-4 mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+      <div class="page-width mt-8 pt-8 border-t border-gray-800 text-center text-sm">
         &copy; 2026 LumiAfrica. All rights reserved.
       </div>
     </footer>
