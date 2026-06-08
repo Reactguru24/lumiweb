@@ -2,14 +2,11 @@
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { productApi, vendorApi } from '@/api/services'
-import { useCurrencyStore } from '@/stores/currency'
 import ProductCard from '@/components/product/ProductCard.vue'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue'
 import HeroSlider from '@/components/common/HeroSlider.vue'
 import { heroImage } from '@/utils/images'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
-
-const currencyStore = useCurrencyStore()
 
 const { data: featured, isLoading: loadingFeatured } = useQuery({ queryKey: ['featured'], queryFn: productApi.getFeatured })
 const { data: trending, isLoading: loadingTrending } = useQuery({ queryKey: ['trending'], queryFn: productApi.getTrending })
@@ -62,10 +59,8 @@ const heroSlides = [
   },
 ]
 
-const freeShippingLabel = computed(() => currencyStore.format(currencyStore.freeShippingThresholdKes))
-
 const promos = computed(() => [
-  { title: 'Free Delivery', desc: `Orders over ${freeShippingLabel.value} in Kenya`, icon: '🚚' },
+  { title: 'Fast Shipping', desc: 'Reliable delivery across East Africa', icon: '🚚' },
   { title: 'M-Pesa & Cards', desc: 'Pay your way, securely', icon: '📱' },
   { title: 'Easy Returns', desc: '14-day return policy', icon: '↩️' },
   { title: 'Verified Vendors', desc: 'Trusted East African sellers', icon: '✓' },

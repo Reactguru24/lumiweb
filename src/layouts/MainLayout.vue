@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import {
   MagnifyingGlassIcon, ShoppingBagIcon, UserIcon, Bars3Icon, XMarkIcon,
   HomeIcon, Squares2X2Icon, HeartIcon,
@@ -10,12 +10,10 @@ import AppearanceControls from '@/components/common/AppearanceControls.vue'
 import { SHOP_CATEGORIES, shopCategoryQuery, shopSubcategoryQuery } from '@/constants/navigation'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
-import { useCurrencyStore } from '@/stores/currency'
-
 const router = useRouter()
+const route = useRoute()
 const auth = useAuthStore()
 const cart = useCartStore()
-const currencyStore = useCurrencyStore()
 const mobileMenuOpen = ref(false)
 const searchQuery = ref('')
 const megaMenuOpen = ref(false)
@@ -46,15 +44,27 @@ async function handleLogout() {
   await auth.logout()
   router.push('/')
 }
+
+const activeNav = computed(() => {
+  const p = route.path
+  return {
+    home: p === '/',
+    shop: p === '/products' || p.startsWith('/products/'),
+    wishlist: p === '/account/wishlist',
+    cart: p === '/cart' || p === '/checkout',
+    account: (p.startsWith('/account') && p !== '/account/wishlist') || p.startsWith('/auth'),
+  }
+})
+
+function navClass(active: boolean) {
+  return active
+    ? 'text-brand-teal dark:text-brand-orange font-semibold'
+    : 'text-gray-500 dark:text-gray-400'
+}
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <div class="bg-brand-teal text-white text-center text-[10px] sm:text-xs py-2 px-2 tracking-wide font-medium">
-      <span class="sm:hidden">Free delivery over {{ currencyStore.format(currencyStore.freeShippingThresholdKes) }} · M-Pesa</span>
-      <span class="hidden sm:inline">FREE DELIVERY ON ORDERS OVER {{ currencyStore.format(currencyStore.freeShippingThresholdKes) }} · M-PESA ACCEPTED · SHOP KENYAN BRANDS</span>
-    </div>
-
     <header class="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-b border-gray-200 dark:border-gray-800">
       <div class="page-width">
         <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
@@ -163,7 +173,7 @@ async function handleLogout() {
         <div>
           <h4 class="text-white font-medium mb-3">Support</h4>
           <ul class="space-y-2 text-sm">
-            <li>Free Delivery</li>
+            <li>Fast Shipping</li>
             <li>Easy Returns</li>
             <li>M-Pesa Payments</li>
             <li>Verified Vendors</li>
@@ -182,26 +192,26 @@ async function handleLogout() {
       </div>
     </footer>
 
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 flex justify-around py-2">
-      <router-link to="/" class="flex flex-col items-center p-2 text-xs">
-        <HomeIcon class="w-5 h-5" />
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 flex justify-around py-1.5 safe-bottom">
+      <router-link to="/" class="flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem]" :class="navClass(activeNav.home)">
+        <HomeIcon class="w-5 h-5" :class="activeNav.home ? 'text-brand-teal dark:text-brand-orange' : ''" />
         Home
       </router-link>
-      <router-link to="/products" class="flex flex-col items-center p-2 text-xs">
-        <Squares2X2Icon class="w-5 h-5" />
+      <router-link to="/products" class="flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem]" :class="navClass(activeNav.shop)">
+        <Squares2X2Icon class="w-5 h-5" :class="activeNav.shop ? 'text-brand-teal dark:text-brand-orange' : ''" />
         Shop
       </router-link>
-      <router-link to="/account/wishlist" class="flex flex-col items-center p-2 text-xs">
-        <HeartIcon class="w-5 h-5" />
+      <router-link to="/account/wishlist" class="flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem]" :class="navClass(activeNav.wishlist)">
+        <HeartIcon class="w-5 h-5" :class="activeNav.wishlist ? 'text-brand-teal dark:text-brand-orange' : ''" />
         Wishlist
       </router-link>
-      <router-link to="/cart" class="flex flex-col items-center p-2 text-xs relative">
-        <ShoppingBagIcon class="w-5 h-5" />
+      <router-link to="/cart" class="flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] relative" :class="navClass(activeNav.cart)">
+        <ShoppingBagIcon class="w-5 h-5" :class="activeNav.cart ? 'text-brand-teal dark:text-brand-orange' : ''" />
         Cart
-        <span v-if="cart.itemCount" class="absolute top-0 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{{ cart.itemCount }}</span>
+        <span v-if="cart.itemCount" class="absolute top-0.5 right-2 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{{ cart.itemCount }}</span>
       </router-link>
-      <router-link :to="auth.isAuthenticated ? auth.getDashboardRoute() : '/auth/login'" class="flex flex-col items-center p-2 text-xs">
-        <UserIcon class="w-5 h-5" />
+      <router-link :to="auth.isAuthenticated ? auth.getDashboardRoute() : '/auth/login'" class="flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem]" :class="navClass(activeNav.account)">
+        <UserIcon class="w-5 h-5" :class="activeNav.account ? 'text-brand-teal dark:text-brand-orange' : ''" />
         Account
       </router-link>
     </nav>
