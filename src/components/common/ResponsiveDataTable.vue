@@ -62,7 +62,7 @@ export interface TableColumn {
 }
 
 export interface TableRow {
-  id: string | number
+  id: string
   [key: string]: any
 }
 

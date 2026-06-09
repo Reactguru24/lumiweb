@@ -25,7 +25,7 @@ const vendorColumns: TableColumn[] = [
 
 const vendorTableData = computed(() =>
   vendors.value?.map((v) => ({
-    id: v.id,
+    id: String(v.id),
     storeName: v.storeName,
     logo: v.logo,
     location: `${v.city}, ${v.country}`,
@@ -111,14 +111,6 @@ async function suspend(id: string) {
           </button>
         </template>
       </ResponsiveDataTable>
-    </div>
-  </div>
-</template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
     </div>
   </div>
 </template>

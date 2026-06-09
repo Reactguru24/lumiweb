@@ -38,7 +38,7 @@ const columns: TableColumn[] = [
 
 const tableData = computed(() =>
   paginated.value?.map((user) => ({
-    id: user.id,
+    id: String(user.id),
     fullName: user.fullName,
     email: user.email,
     role: user.role,
