@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { vendorApplicationApi, vendorApi } from '@/api/services'
 import { useToast } from '@/composables/useToast'
-import StatusBadge from '@/components/common/StatusBadge.vue'
 import { formatDate } from '@/utils/storage'
+import StatusBadge from '@/components/common/StatusBadge.vue'
+import ResponsiveDataTable from '@/components/common/ResponsiveDataTable.vue'
+import type { TableColumn } from '@/components/common/ResponsiveDataTable.vue'
 
 const toast = useToast()
 const queryClient = useQueryClient()
@@ -13,6 +15,24 @@ const reviewNote = ref('')
 
 const { data: applications } = useQuery({ queryKey: ['vendor-apps'], queryFn: vendorApplicationApi.getAll })
 const { data: vendors } = useQuery({ queryKey: ['admin-vendors'], queryFn: vendorApi.getAll })
+
+const vendorColumns: TableColumn[] = [
+  { key: 'storeName', label: 'Store', width: '30%' },
+  { key: 'location', label: 'Location', width: '25%' },
+  { key: 'productCount', label: 'Products', width: '15%' },
+  { key: 'rating', label: 'Rating', width: '15%' },
+]
+
+const vendorTableData = computed(() =>
+  vendors.value?.map((v) => ({
+    id: v.id,
+    storeName: v.storeName,
+    logo: v.logo,
+    location: `${v.city}, ${v.country}`,
+    productCount: v.productCount,
+    rating: v.rating,
+  })) ?? []
+)
 
 async function approve(id: string) {
   await vendorApplicationApi.approve(id)
@@ -74,25 +94,26 @@ async function suspend(id: string) {
       </div>
     </div>
 
-    <div v-else class="card overflow-hidden">
-      <div class="table-responsive">
-      <table class="data-table">
-        <thead class="bg-gray-50 dark:bg-gray-800">
-          <tr><th class="text-left p-4">Store</th><th class="text-left p-4 hidden md:table-cell">Location</th><th class="text-left p-4">Products</th><th class="text-left p-4">Rating</th><th class="text-right p-4">Actions</th></tr>
-        </thead>
-        <tbody>
-          <tr v-for="v in vendors" :key="v.id" class="border-t border-gray-200 dark:border-gray-800">
-            <td class="p-4">
-              <div class="flex items-center gap-3">
-                <img :src="v.logo" class="w-8 h-8 rounded-full object-cover" :alt="v.storeName" />
-                <span class="font-medium">{{ v.storeName }}</span>
-              </div>
-            </td>
-            <td class="p-4 hidden md:table-cell text-gray-500">{{ v.city }}, {{ v.country }}</td>
-            <td class="p-4">{{ v.productCount }}</td>
-            <td class="p-4">★ {{ v.rating }}</td>
-            <td class="p-4 text-right">
-              <button class="text-xs text-red-600 hover:underline" @click="suspend(v.id)">Suspend</button>
+    <div v-else>
+      <ResponsiveDataTable :columns="vendorColumns" :rows="vendorTableData">
+        <template #cell-storeName="{ row }">
+          <div class="flex items-center gap-3">
+            <img :src="row.logo" :alt="row.storeName" class="w-8 h-8 rounded-full object-cover" />
+            <span class="font-medium">{{ row.storeName }}</span>
+          </div>
+        </template>
+        <template #cell-rating="{ row }">
+          <span>★ {{ row.rating }}</span>
+        </template>
+        <template #actions="{ row }">
+          <button class="text-xs text-red-600 hover:text-red-700 transition-colors" @click="suspend(row.id)">
+            Suspend
+          </button>
+        </template>
+      </ResponsiveDataTable>
+    </div>
+  </div>
+</template>
             </td>
           </tr>
         </tbody>

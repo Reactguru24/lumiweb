@@ -6,6 +6,8 @@ import { vendorApi, productApi } from '@/api/services'
 import { useToast } from '@/composables/useToast'
 import { formatCurrency } from '@/utils/storage'
 import StatusBadge from '@/components/common/StatusBadge.vue'
+import ResponsiveDataTable from '@/components/common/ResponsiveDataTable.vue'
+import type { TableColumn } from '@/components/common/ResponsiveDataTable.vue'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { usePagination } from '@/composables/usePagination'
 import Pagination from '@/components/common/Pagination.vue'
@@ -33,6 +35,26 @@ const { data: products, isLoading } = useQuery({
 })
 
 const { page, totalPages, paginated, total, goTo, pageSize } = usePagination(products, 10)
+
+const columns: TableColumn[] = [
+  { key: 'name', label: 'Product', width: '30%' },
+  { key: 'sku', label: 'SKU', width: '15%' },
+  { key: 'price', label: 'Price', width: '15%', format: formatCurrency },
+  { key: 'stock', label: 'Stock', width: '15%' },
+  { key: 'status', label: 'Status', width: '15%' },
+]
+
+const tableData = computed(() =>
+  paginated.value?.map((p) => ({
+    id: p.id,
+    name: p.name,
+    image: p.images[0],
+    sku: p.sku,
+    price: p.price,
+    stock: p.stock,
+    status: p.status,
+  })) ?? []
+)
 
 function resetForm() {
   form.value = { name: '', description: '', sku: '', category: 'men', subcategory: 'T-Shirts', brand: '', gender: 'men', sizes: ['S', 'M', 'L'], price: 0, discount: 0, stock: 0 }
@@ -110,40 +132,27 @@ async function removeProduct(id: string) {
     </div>
 
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 5" :key="i" class="skeleton h-16" /></div>
-    <div v-else class="card overflow-hidden">
-      <div class="table-responsive">
-      <table class="data-table">
-        <thead class="bg-gray-50 dark:bg-gray-800">
-          <tr>
-            <th class="text-left p-4">Product</th>
-            <th class="text-left p-4 hidden md:table-cell">SKU</th>
-            <th class="text-left p-4">Price</th>
-            <th class="text-left p-4 hidden md:table-cell">Stock</th>
-            <th class="text-left p-4">Status</th>
-            <th class="text-right p-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in paginated" :key="p.id" class="border-t border-gray-200 dark:border-gray-800">
-            <td class="p-4">
-              <div class="flex items-center gap-3">
-                <img :src="p.images[0]" class="w-10 h-12 object-cover" :alt="p.name" />
-                <span class="font-medium">{{ p.name }}</span>
-              </div>
-            </td>
-            <td class="p-4 hidden md:table-cell text-gray-500">{{ p.sku }}</td>
-            <td class="p-4">{{ formatCurrency(p.price) }}</td>
-            <td class="p-4 hidden md:table-cell">{{ p.stock }}</td>
-            <td class="p-4"><StatusBadge :status="p.status" /></td>
-            <td class="p-4 text-right">
-              <button class="p-1 hover:text-blue-600" @click="editProduct(p)"><PencilIcon class="w-4 h-4" /></button>
-              <button class="p-1 hover:text-yellow-600" @click="deleteProduct(p.id)"><TrashIcon class="w-4 h-4" /></button>
-              <button class="p-1 hover:text-red-600 text-xs" @click="removeProduct(p.id)">Del</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
+    <div v-else>
+      <ResponsiveDataTable :columns="columns" :rows="tableData">
+        <template #cell-name="{ row }">
+          <div class="flex items-center gap-3">
+            <img :src="row.image" :alt="row.name" class="w-10 h-12 object-cover rounded" />
+            <span class="font-medium">{{ row.name }}</span>
+          </div>
+        </template>
+        <template #cell-status="{ row }">
+          <StatusBadge :status="row.status" />
+        </template>
+        <template #actions="{ row }">
+          <button class="p-1 hover:text-blue-600 transition-colors" @click="editProduct(products?.find(p => p.id === row.id)!)">
+            <PencilIcon class="w-4 h-4" />
+          </button>
+          <button class="p-1 hover:text-yellow-600 transition-colors" @click="deleteProduct(row.id)">
+            <TrashIcon class="w-4 h-4" />
+          </button>
+          <button class="p-1 hover:text-red-600 text-xs transition-colors" @click="removeProduct(row.id)">Del</button>
+        </template>
+      </ResponsiveDataTable>
     </div>
     <Pagination v-if="!isLoading && total > 0" :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @update:page="goTo" />
   </div>

@@ -7,6 +7,8 @@ import { formatDate } from '@/utils/storage'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/outline'
 import { usePagination } from '@/composables/usePagination'
 import Pagination from '@/components/common/Pagination.vue'
+import ResponsiveDataTable from '@/components/common/ResponsiveDataTable.vue'
+import type { TableColumn } from '@/components/common/ResponsiveDataTable.vue'
 
 const toast = useToast()
 const queryClient = useQueryClient()
@@ -26,6 +28,25 @@ const filtered = computed(() => {
 
 const { page, totalPages, paginated, total, goTo, pageSize } = usePagination(filtered, 15)
 
+const columns: TableColumn[] = [
+  { key: 'fullName', label: 'Name', width: '25%' },
+  { key: 'email', label: 'Email', width: '30%' },
+  { key: 'role', label: 'Role', width: '15%' },
+  { key: 'createdAt', label: 'Joined', width: '20%', format: formatDate },
+  { key: 'disabled', label: 'Status', width: '10%', format: (v) => v ? 'Disabled' : 'Active' },
+]
+
+const tableData = computed(() =>
+  paginated.value?.map((user) => ({
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+    disabled: user.disabled,
+  })) ?? []
+)
+
 async function disableUser(id: string) {
   await userApi.disable(id)
   toast.success('Account disabled')
@@ -44,26 +65,17 @@ async function disableUser(id: string) {
     </div>
 
     <div v-if="isLoading" class="space-y-3"><div v-for="i in 8" :key="i" class="skeleton h-14" /></div>
-    <div v-else class="card overflow-hidden">
-      <div class="table-responsive">
-      <table class="data-table">
-        <thead class="bg-gray-50 dark:bg-gray-800">
-          <tr><th class="text-left p-4">Name</th><th class="text-left p-4 hidden md:table-cell">Email</th><th class="text-left p-4">Role</th><th class="text-left p-4 hidden md:table-cell">Joined</th><th class="text-left p-4">Status</th><th class="text-right p-4">Actions</th></tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in paginated" :key="user.id" class="border-t border-gray-200 dark:border-gray-800">
-            <td class="p-4 font-medium">{{ user.fullName }}</td>
-            <td class="p-4 hidden md:table-cell text-gray-500">{{ user.email }}</td>
-            <td class="p-4"><span class="badge bg-gray-100 dark:bg-gray-800">{{ user.role }}</span></td>
-            <td class="p-4 hidden md:table-cell text-gray-500">{{ formatDate(user.createdAt) }}</td>
-            <td class="p-4"><span :class="user.disabled ? 'text-red-600' : 'text-green-600'">{{ user.disabled ? 'Disabled' : 'Active' }}</span></td>
-            <td class="p-4 text-right">
-              <button v-if="!user.disabled && user.role !== 'ADMIN'" class="text-xs text-red-600 hover:underline" @click="disableUser(user.id)">Disable</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </div>
+    <div v-else>
+      <ResponsiveDataTable :columns="columns" :rows="tableData">
+        <template #cell-role="{ row }">
+          <span class="badge bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">{{ row.role }}</span>
+        </template>
+        <template #actions="{ row }">
+          <button v-if="!row.disabled && row.role !== 'ADMIN'" class="text-xs text-red-600 hover:text-red-700 transition-colors" @click="disableUser(row.id)">
+            Disable
+          </button>
+        </template>
+      </ResponsiveDataTable>
     </div>
     <Pagination v-if="!isLoading" :page="page" :total-pages="totalPages" :total="total" :page-size="pageSize" @update:page="goTo" />
   </div>
