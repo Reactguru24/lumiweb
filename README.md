@@ -4,11 +4,11 @@ A production-quality, mobile-first eCommerce web application for fashion and clo
 
 ## Tech Stack
 
-- Vue 3 (Composition API) + TypeScript + Vite
-- Pinia · Vue Router · TanStack Query
-- Tailwind CSS · Headless UI · VueUse
-- Chart.js · Zod · Axios
+- Next.js 15 (App Router) + React 19 + TypeScript
+- Zustand · TanStack Query · Zod
+- Tailwind CSS · Chart.js · Sonner
 - Mock data with LocalStorage persistence
+- Docker (optional)
 
 ## Getting Started
 
@@ -17,60 +17,41 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:3000
+
+## Docker (optional)
+
+```bash
+docker compose up --build
+```
 
 ## Demo Accounts
 
-| Role     | Email              | Password    |
-|----------|--------------------|-------------|
-| Admin    | admin@luxe.com     | admin123    |
-| Customer | customer@luxe.com  | customer123 |
-| Vendor   | vendor@luxe.com    | vendor123   |
-
-## Features
-
-### Customer
-- Fashion homepage with hero, featured, trending, bestsellers
-- Advanced product catalog with filters & sorting
-- Product detail with zoom, reviews, wishlist
-- Shopping cart with coupons & save-for-later
-- Multi-step checkout
-- Account dashboard with orders, wishlist, vendor application
-
-### Vendor
-- Shopify-style seller dashboard
-- Product CRUD with inventory tracking
-- Order management with status updates
-- Analytics with Chart.js
-- Store profile settings
-
-### Admin
-- Enterprise dashboard with platform metrics
-- User management (search, disable)
-- Vendor application approval workflow
-- Product moderation
-- Order monitoring
-- Platform settings (categories, brands, taxes, coupons)
+| Role     | Email                   | Password    |
+|----------|-------------------------|-------------|
+| Admin    | admin@lumiafrica.com    | admin123    |
+| Customer | customer@lumiafrica.com | customer123 |
+| Vendor   | vendor@lumiafrica.com   | vendor123   |
 
 ## Project Structure
 
 ```
-src/
+app/              # Next.js App Router pages & layouts
+components/       # Reusable UI components (.tsx)
+lib/
 ├── api/          # Mock API service layer
-├── components/   # Reusable UI components
-├── composables/  # Vue composables
-├── data/         # Seed data generator
-├── layouts/      # Page layouts
-├── pages/        # Route pages (auth, customer, vendor, admin)
-├── router/       # Vue Router + RBAC guards
-├── stores/       # Pinia stores
+├── stores/       # Zustand stores
+├── hooks/        # React hooks
 ├── types/        # TypeScript interfaces
-└── utils/        # Helpers, validation, storage
+├── utils/        # Helpers, validation, storage
+├── constants/    # App constants
+└── data/         # Seed data generator
+public/           # Static assets
 ```
 
 ## Build
 
 ```bash
 npm run build
-npm run preview
+npm start
 ```
