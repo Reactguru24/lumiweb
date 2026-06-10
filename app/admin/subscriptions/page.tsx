@@ -14,7 +14,7 @@ import { isFeaturedListingActive } from '@/lib/utils/subscriptions'
 export default function AdminSubscriptionsPage() {
   const subscriptions = useLocalData(() => vendorSubscriptionData.getAll())
   const vendors = useLocalData(() => vendorData.getAll())
-  const [createForm, setCreateForm] = useState({ vendorId: '', plan: 'monthly' as 'monthly' | 'quarterly' | 'biannual' | 'yearly' })
+  const [createForm, setCreateForm] = useState({ vendorId: '', plan: 'monthly' as 'monthly' | 'quarterly' | 'biannual' | 'yearly', paymentMethod: 'card' })
 
   const subscriptionDetails = subscriptions.map((sub) => {
     const vendor = vendors.find((v) => v.id === sub.vendorId)
@@ -27,7 +27,7 @@ export default function AdminSubscriptionsPage() {
       vendorName: vendor?.storeName || 'Unknown Vendor',
       vendorLogo: vendor?.logo,
       plan: sub.plan,
-      planName: plan.name,
+      planName: plan.label,
       amountPaid: sub.amountPaid,
       status: isActive ? 'active' : 'expired',
       startedAt: sub.startedAt,
@@ -48,9 +48,9 @@ export default function AdminSubscriptionsPage() {
       return
     }
     try {
-      vendorSubscriptionData.subscribe(createForm.vendorId, createForm.plan)
+      vendorSubscriptionData.subscribe(createForm.vendorId, createForm.plan, createForm.paymentMethod)
       toast.success('Subscription created')
-      setCreateForm({ vendorId: '', plan: 'monthly' })
+      setCreateForm({ vendorId: '', plan: 'monthly', paymentMethod: 'card' })
       notifyLocalDataChange()
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to create subscription')
