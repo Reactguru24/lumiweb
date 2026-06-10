@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   HomeIcon, CubeIcon, ShoppingCartIcon, ArchiveBoxIcon, ChartBarIcon,
   ChatBubbleLeftRightIcon, UserCircleIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline'
 import { AppLogo } from '@/components/common/AppLogo'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
@@ -20,6 +21,7 @@ const navItems = [
   { name: 'Analytics', to: '/vendor/analytics', icon: ChartBarIcon },
   { name: 'Reviews', to: '/vendor/reviews', icon: ChatBubbleLeftRightIcon },
   { name: 'Store Profile', to: '/vendor/profile', icon: UserCircleIcon },
+  { name: 'Featured Listing', to: '/vendor/subscription', icon: SparklesIcon },
 ]
 
 export function VendorLayout({ children }: { children: ReactNode }) {

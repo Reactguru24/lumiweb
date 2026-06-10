@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
 import { registerSchema } from '@/lib/utils/validation'
-import { RouteGuard } from '@/components/layouts/RouteGuard'
+import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 
 export default function RegisterPage() {
   const router = useRouter()
   const auth = useAuthStore()
+  useGuestRedirect()
   const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirmPassword: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -34,7 +35,6 @@ export default function RegisterPage() {
   }
 
   return (
-    <RouteGuard guest>
       <div>
         <h1 className="font-display text-3xl font-semibold mb-2">Create Account</h1>
         <p className="text-gray-500 mb-8">Join LumiAfrica and start shopping across East Africa</p>
@@ -61,6 +61,5 @@ export default function RegisterPage() {
           <Link href="/auth/login" className="text-gray-900 dark:text-white font-medium hover:underline">Sign In</Link>
         </p>
       </div>
-    </RouteGuard>
   )
 }

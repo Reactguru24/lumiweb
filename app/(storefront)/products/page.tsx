@@ -1,15 +1,14 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef, useMemo } from 'react'
+import { Suspense, useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { productApi, vendorApi } from '@/lib/api/services'
+import { useLocalData } from '@/lib/data/hooks'
+import { productData, vendorData } from '@/lib/data/services'
 import type { ProductFilters } from '@/lib/types'
 import { filtersFromQuery, filtersEqual, queryFromFilters, pageTitleFromFilters } from '@/lib/utils/productFilters'
 import { usePagination } from '@/lib/hooks/usePagination'
 import { ProductCard } from '@/components/product/ProductCard'
 import { ProductFiltersPanel } from '@/components/product/ProductFiltersPanel'
-import { LoadingSkeleton } from '@/components/common/LoadingSkeleton'
 import { Pagination } from '@/components/common/Pagination'
 import { MobileDrawer } from '@/components/common/MobileDrawer'
 import { Squares2X2Icon, ListBulletIcon, FunnelIcon } from '@heroicons/react/24/outline'
@@ -17,6 +16,11 @@ import { Squares2X2Icon, ListBulletIcon, FunnelIcon } from '@heroicons/react/24/
 const brands = ['Sol Generation', 'Vivo Activewear', 'Nike', 'Adidas', "Levi's", 'H&M', 'Zara', 'Suave Kenya']
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 const colors = ['Black', 'White', 'Navy', 'Grey', 'Beige', 'Red', 'Blue']
+
+function productsHref(filters: ProductFilters, page: number): string {
+  const nextQuery = new URLSearchParams(queryFromFilters(filters, page)).toString()
+  return nextQuery ? `/products?${nextQuery}` : '/products'
+}
 
 function ProductsPageContent() {
   const router = useRouter()
@@ -29,14 +33,15 @@ function ProductsPageContent() {
   const [listView, setListView] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products', filters],
-    queryFn: () => productApi.getAll(filters),
-  })
+  const products = useLocalData(() => productData.getAll(filters))
 
   const { page, totalPages, paginated, total, goTo, reset, pageSize } = usePagination(products, 12)
   const pageTitle = pageTitleFromFilters(filters)
-  const { data: vendors } = useQuery({ queryKey: ['vendors'], queryFn: vendorApi.getAll })
+  const vendors = useLocalData(() => vendorData.getAll())
+
+  const syncRoute = useCallback((nextFilters: ProductFilters, nextPage: number) => {
+    router.replace(productsHref(nextFilters, nextPage), { scroll: false })
+  }, [router])
 
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -65,16 +70,15 @@ function ProductsPageContent() {
     queueMicrotask(() => { syncingFromRoute.current = false })
   }, [queryString, queryObj, goTo])
 
-  useEffect(() => {
-    if (syncingFromRoute.current) return
-    const nextQuery = new URLSearchParams(queryFromFilters(filters, page)).toString()
-    if (nextQuery === queryString) return
-    router.replace(nextQuery ? `/products?${nextQuery}` : '/products')
-  }, [filters, page, queryString, router])
-
   function updateFilters(next: ProductFilters) {
     setFilters(next)
     reset()
+    syncRoute(next, 1)
+  }
+
+  function handlePageChange(nextPage: number) {
+    goTo(nextPage)
+    syncRoute(filters, nextPage)
   }
 
   function clearFilters() {
@@ -109,14 +113,14 @@ function ProductsPageContent() {
           </div>
         </aside>
         <div className="flex-1 min-w-0">
-          {isLoading ? <LoadingSkeleton count={8} /> : paginated.length ? (
+          {paginated.length ? (
             <div className={listView ? 'space-y-4' : 'grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6'}>
               {paginated.map((p) => <ProductCard key={p.id} product={p} listView={listView} />)}
             </div>
           ) : (
             <div className="text-center py-16 text-gray-500 px-4">No products found. Try adjusting your filters.</div>
           )}
-          {!isLoading && total > 0 && <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goTo} />}
+          {total > 0 && <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={handlePageChange} />}
         </div>
       </div>
       <MobileDrawer open={showFilters} onOpenChange={setShowFilters} title="Filter Products" footer={
@@ -133,7 +137,7 @@ function ProductsPageContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="page-container"><div className="skeleton h-96 w-full" /></div>}>
+    <Suspense>
       <ProductsPageContent />
     </Suspense>
   )

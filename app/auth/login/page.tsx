@@ -1,17 +1,17 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
 import { loginSchema } from '@/lib/utils/validation'
-import { RouteGuard } from '@/components/layouts/RouteGuard'
+import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const auth = useAuthStore()
+  useGuestRedirect()
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -28,7 +28,9 @@ function LoginForm() {
     try {
       await auth.login(form.email, form.password)
       toast.success('Welcome back!')
-      const redirect = searchParams.get('redirect')
+      const redirect = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('redirect')
+        : null
       router.push(redirect || auth.getDashboardRoute())
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Login failed')
@@ -36,10 +38,10 @@ function LoginForm() {
   }
 
   return (
-    <RouteGuard guest>
       <div>
         <h1 className="font-display text-3xl font-semibold mb-2">Welcome Back</h1>
-        <p className="text-gray-500 mb-8">Sign in to your account</p>
+        <p className="text-gray-500 mb-2">Sign in to your account</p>
+        <p className="text-xs text-gray-500 mb-8">Customer, vendor, and admin accounts are separate. Use the email for the role you need — sign out before switching.</p>
         <form className="space-y-5" onSubmit={submit}>
           <div>
             <label className="block text-sm font-medium mb-1.5">Email</label>
@@ -66,14 +68,5 @@ function LoginForm() {
           <p>Vendor: vendor@lumiafrica.com / vendor123</p>
         </div>
       </div>
-    </RouteGuard>
-  )
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="skeleton h-64 w-full" />}>
-      <LoginForm />
-    </Suspense>
   )
 }

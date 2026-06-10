@@ -1,33 +1,32 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
-import { vendorApi, reviewApi } from '@/lib/api/services'
+import { vendorData, reviewData } from '@/lib/data/services'
 import { StarIcon } from '@heroicons/react/24/solid'
 
 export default function VendorReviewsPage() {
   const auth = useAuthStore()
-  const queryClient = useQueryClient()
   const [replyText, setReplyText] = useState<Record<string, string>>({})
-  const { data: vendor } = useQuery({ queryKey: ['my-vendor', auth.user?.id], queryFn: () => vendorApi.getByUserId(auth.user!.id) })
-  const { data: reviews, isLoading } = useQuery({ queryKey: ['vendor-reviews', vendor?.id], queryFn: () => reviewApi.getByVendor(vendor!.id), enabled: !!vendor?.id })
+  const vendor = useLocalData(() => auth.user ? vendorData.getByUserId(auth.user.id) : null)
+  const reviews = useLocalData(() => vendor ? reviewData.getByVendor(vendor.id) : [])
 
-  async function submitReply(reviewId: string) {
+  function submitReply(reviewId: string) {
     const reply = replyText[reviewId]
     if (!reply?.trim()) return
-    await reviewApi.reply(reviewId, reply)
+    reviewData.reply(reviewId, reply)
     toast.success('Reply posted')
     setReplyText((prev) => ({ ...prev, [reviewId]: '' }))
-    queryClient.invalidateQueries({ queryKey: ['vendor-reviews'] })
+    notifyLocalDataChange()
   }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Customer Reviews</h1>
-      {isLoading ? <div className="space-y-3">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-24" />)}</div>
-        : reviews?.length ? reviews.map((review) => (
+      {reviews.length ? reviews.map((review) => (
           <div key={review.id} className="card p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <p className="font-medium text-sm">{review.userName}</p>

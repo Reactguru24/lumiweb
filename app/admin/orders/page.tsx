@@ -1,9 +1,10 @@
 'use client'
 
 import Image from 'next/image'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
-import { orderApi } from '@/lib/api/services'
+import { orderData } from '@/lib/data/services'
 import { formatCurrency, formatDate } from '@/lib/utils/storage'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { Pagination } from '@/components/common/Pagination'
@@ -13,22 +14,19 @@ import type { OrderStatus } from '@/lib/types'
 const statuses: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled']
 
 export default function AdminOrdersPage() {
-  const queryClient = useQueryClient()
-  const { data: orders, isLoading } = useQuery({ queryKey: ['admin-orders'], queryFn: orderApi.getAll })
+  const orders = useLocalData(() => orderData.getAll())
   const { page, totalPages, paginated, total, goTo, pageSize } = usePagination(orders, 10)
 
-  async function updateStatus(id: string, status: OrderStatus) {
-    await orderApi.updateStatus(id, status)
+  function updateStatus(id: string, status: OrderStatus) {
+    orderData.updateStatus(id, status)
     toast.success(`Order ${status}`)
-    queryClient.invalidateQueries({ queryKey: ['admin-orders'] })
+    notifyLocalDataChange()
   }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Order Monitoring</h1>
-      {isLoading ? <div className="space-y-3">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-24" />)}</div>
-        : (
-          <>
+      <>
             <div className="space-y-4">
               {paginated.map((order) => (
                 <div key={order.id} className="card p-4">
@@ -52,8 +50,7 @@ export default function AdminOrdersPage() {
               ))}
             </div>
             {total > 0 && <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goTo} />}
-          </>
-        )}
+      </>
     </div>
   )
 }

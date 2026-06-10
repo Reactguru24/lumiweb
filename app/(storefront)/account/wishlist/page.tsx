@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/stores/cart'
-import { productApi } from '@/lib/api/services'
+import { productData } from '@/lib/data/services'
 import { ProductCard } from '@/components/product/ProductCard'
 import { EmptyState } from '@/components/common/EmptyState'
 import type { Product } from '@/lib/types'
@@ -17,7 +17,7 @@ export default function AccountWishlistPage() {
     async function load() {
       const results: Product[] = []
       for (const id of cart.wishlist) {
-        try { results.push(await productApi.getById(id)) } catch { /* skip */ }
+        try { results.push(await productData.getById(id)) } catch { /* skip */ }
       }
       setProducts(results)
     }

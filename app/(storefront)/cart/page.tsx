@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useCartStore } from '@/lib/stores/cart'
-import { settingsApi } from '@/lib/api/services'
+import { settingsData } from '@/lib/data/services'
 import { formatCurrency } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES, STANDARD_SHIPPING_KES } from '@/lib/constants/commerce'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -18,8 +18,8 @@ export default function CartPage() {
   const [taxRate, setTaxRate] = useState(0.08)
 
   useEffect(() => {
-    cart.getCartProducts().then(setCartProducts)
-    settingsApi.get().then((s) => setTaxRate(s.taxRate))
+    setCartProducts(cart.getCartProducts())
+    setTaxRate(settingsData.get().taxRate)
   }, [cart])
 
   const subtotal = useMemo(() => cartProducts.reduce((s, i) => s + i.product.price * (1 - i.product.discount / 100) * i.quantity, 0), [cartProducts])
@@ -27,10 +27,10 @@ export default function CartPage() {
   const tax = (subtotal - cart.couponDiscount) * taxRate
   const total = subtotal - cart.couponDiscount + shipping + tax
 
-  async function refresh() { setCartProducts(await cart.getCartProducts()) }
+  function refresh() { setCartProducts(cart.getCartProducts()) }
 
   async function applyCoupon() {
-    const settings = await settingsApi.get()
+    const settings = await settingsData.get()
     const coupon = settings.coupons.find((c) => c.code.toUpperCase() === couponInput.toUpperCase() && c.active)
     if (!coupon) { cart.applyCoupon('', 0); return }
     if (subtotal < coupon.minOrder) return

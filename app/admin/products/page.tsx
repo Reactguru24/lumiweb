@@ -1,9 +1,10 @@
 'use client'
 
 import Image from 'next/image'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
-import { productApi } from '@/lib/api/services'
+import { productData } from '@/lib/data/services'
 import { formatCurrency } from '@/lib/utils/storage'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { ResponsiveDataTable } from '@/components/common/ResponsiveDataTable'
@@ -12,22 +13,20 @@ import { usePagination } from '@/lib/hooks/usePagination'
 import type { ProductStatus } from '@/lib/types'
 
 export default function AdminProductsPage() {
-  const queryClient = useQueryClient()
-  const { data: products, isLoading } = useQuery({ queryKey: ['admin-products'], queryFn: () => productApi.getAll({ status: undefined }) })
+  const products = useLocalData(() => productData.getAll({ status: undefined }))
   const { page, totalPages, paginated, total, goTo, pageSize } = usePagination(products, 15)
   const tableData = paginated.map((p) => ({ id: p.id, name: p.name, image: p.images[0], brand: p.brand, price: p.price, status: p.status }))
 
-  async function moderate(id: string, status: ProductStatus) {
-    await productApi.moderate(id, status)
+  function moderate(id: string, status: ProductStatus) {
+    productData.moderate(id, status)
     toast.success(`Product ${status}`)
-    queryClient.invalidateQueries({ queryKey: ['admin-products'] })
+    notifyLocalDataChange()
   }
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-6">Product Moderation</h1>
-      {isLoading ? <div className="space-y-3">{[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <div key={i} className="skeleton h-14" />)}</div> : (
-        <>
+      <>
           <ResponsiveDataTable
             columns={[{ key: 'name', label: 'Product', width: '40%' }, { key: 'brand', label: 'Brand', width: '20%' }, { key: 'price', label: 'Price', width: '20%', format: (v) => formatCurrency(v as number) }, { key: 'status', label: 'Status', width: '20%' }]}
             rows={tableData}
@@ -45,8 +44,7 @@ export default function AdminProductsPage() {
             )}
           />
           <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goTo} />
-        </>
-      )}
+      </>
     </div>
   )
 }

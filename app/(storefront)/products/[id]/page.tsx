@@ -4,14 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useParams, useRouter, usePathname } from 'next/navigation'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData, useHydration } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
-import { productApi, reviewApi, vendorApi } from '@/lib/api/services'
+import { productData, reviewData, vendorData } from '@/lib/data/services'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
 import { formatCurrency } from '@/lib/utils/storage'
 import { ProductCard } from '@/components/product/ProductCard'
-import { LoadingSkeleton } from '@/components/common/LoadingSkeleton'
 import { StarIcon } from '@heroicons/react/24/solid'
 import { HeartIcon, MagnifyingGlassPlusIcon, StarIcon as StarOutline } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid'
@@ -23,8 +23,7 @@ export default function ProductDetailPage() {
   const productId = params.id as string
   const { addItem, toggleWishlist, isInWishlist } = useCartStore()
   const auth = useAuthStore()
-  const queryClient = useQueryClient()
-
+  const isHydrated = useHydration()
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -34,10 +33,16 @@ export default function ProductDetailPage() {
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
 
-  const { data: product, isLoading } = useQuery({ queryKey: ['product', productId], queryFn: () => productApi.getById(productId) })
-  const { data: reviews } = useQuery({ queryKey: ['reviews', productId], queryFn: () => reviewApi.getByProduct(productId), enabled: !!productId })
-  const { data: vendor } = useQuery({ queryKey: ['vendor', product?.vendorId], queryFn: () => vendorApi.getById(product!.vendorId), enabled: !!product?.vendorId })
-  const { data: similar } = useQuery({ queryKey: ['similar', product?.category], queryFn: () => productApi.getAll({ category: product!.category, sort: 'popular' }), enabled: !!product?.category })
+  const product = useLocalData(() => {
+    try {
+      return productData.getById(productId)
+    } catch {
+      return null
+    }
+  })
+  const reviews = useLocalData(() => productId ? reviewData.getByProduct(productId) : [])
+  const vendor = useLocalData(() => product?.vendorId ? vendorData.getById(product.vendorId) : null)
+  const similar = useLocalData(() => product?.category ? productData.getAll({ category: product.category, sort: 'popular' }) : [])
 
   const salePrice = product ? product.price * (1 - product.discount / 100) : 0
   const inWishlist = product ? isInWishlist(product.id) : false
@@ -63,12 +68,11 @@ export default function ProductDetailPage() {
     if (reviewComment.trim().length < 10) { toast.warning('Please write at least 10 characters'); return }
     setSubmittingReview(true)
     try {
-      await reviewApi.create({ productId: product.id, userId: auth.user!.id, userName: auth.user!.fullName, rating: reviewRating, comment: reviewComment.trim() })
+      reviewData.create({ productId: product.id, userId: auth.user!.id, userName: auth.user!.fullName, rating: reviewRating, comment: reviewComment.trim() })
       setReviewRating(0)
       setReviewComment('')
       toast.success('Review submitted!')
-      queryClient.invalidateQueries({ queryKey: ['reviews', productId] })
-      queryClient.invalidateQueries({ queryKey: ['product', productId] })
+      notifyLocalDataChange()
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to submit review')
     } finally {
@@ -76,8 +80,13 @@ export default function ProductDetailPage() {
     }
   }
 
-  if (isLoading) return <div className="page-container"><LoadingSkeleton count={1} height="500px" /></div>
-  if (!product) return <div className="page-container text-center py-16">Product not found</div>
+  if (!isHydrated) {
+    return <div className="page-container text-center py-16">Loading...</div>
+  }
+
+  if (!product) {
+    return <div className="page-container text-center py-16">Product not found</div>
+  }
 
   return (
     <div className="page-container">

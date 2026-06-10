@@ -1,4 +1,5 @@
-import type { AppData, Product, User, Vendor, Order, Review, VendorApplication } from '@/lib/types'
+import type { AppData, Product, User, Vendor, Order, Review, VendorApplication, VendorSubscription, FeaturedListingPlan } from '@/lib/types'
+import { getFeaturedListingPlan } from '@/lib/constants/subscriptions'
 import { generateId, slugify } from '@/lib/utils/storage'
 import { categoryClothingImage, storeLogoImage, storeBannerImage } from '@/lib/utils/images'
 import { FREE_SHIPPING_KES, STANDARD_SHIPPING_KES, EXPRESS_SHIPPING_KES, NEXTDAY_SHIPPING_KES } from '@/lib/constants/commerce'
@@ -168,6 +169,43 @@ function generateVendors(users: User[]): Vendor[] {
     })
   })
   return vendors
+}
+
+function addMonths(date: Date, months: number): Date {
+  const next = new Date(date)
+  next.setMonth(next.getMonth() + months)
+  return next
+}
+
+function generateVendorSubscriptions(vendors: Vendor[]): VendorSubscription[] {
+  const subscriptions: VendorSubscription[] = []
+  const demoVendorId = vendors.find((v) => v.userId === 'vendor-demo')?.id
+
+  // Top vendors on homepage: vendors with active featured listing (exclude demo for testing subscribe flow)
+  const eligible = vendors
+    .filter((v) => v.id !== demoVendorId)
+    .sort((a, b) => b.totalSales - a.totalSales)
+    .slice(0, 6)
+
+  const plans: FeaturedListingPlan[] = ['monthly', 'quarterly', 'biannual', 'yearly', 'biannual', 'quarterly']
+
+  eligible.forEach((vendor, i) => {
+    const plan = getFeaturedListingPlan(plans[i % plans.length])
+    const startedAt = new Date()
+    startedAt.setDate(startedAt.getDate() - 15)
+    subscriptions.push({
+      id: `sub-seed-${vendor.id}`,
+      vendorId: vendor.id,
+      plan: plan.id,
+      amountPaid: plan.priceKes,
+      startedAt: startedAt.toISOString(),
+      expiresAt: addMonths(startedAt, plan.durationMonths).toISOString(),
+      active: true,
+      paymentMethod: 'M-Pesa',
+    })
+  })
+
+  return subscriptions
 }
 
 function generateProducts(vendors: Vendor[]): Product[] {
@@ -380,10 +418,12 @@ export function generateSeedData(): AppData {
   const reviews = generateReviews(products, users)
   const orders = generateOrders(products, users)
   const vendorApplications = generateVendorApplications(users)
+  const vendorSubscriptions = generateVendorSubscriptions(vendors)
 
   return {
     users,
     vendors,
+    vendorSubscriptions,
     vendorApplications,
     products,
     reviews,

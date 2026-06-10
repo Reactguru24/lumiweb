@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
-import { orderApi, settingsApi } from '@/lib/api/services'
+import { orderData, settingsData } from '@/lib/data/services'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
 import { formatCurrency } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES } from '@/lib/constants/commerce'
@@ -30,11 +30,10 @@ export default function CheckoutPage() {
   const paymentMethods = ['M-Pesa', 'Visa', 'Mastercard', 'Airtel Money']
 
   useEffect(() => {
-    cart.getCartProducts().then((items) => {
-      setCartProducts(items)
-      if (!items.length) router.push('/cart')
-    })
-    settingsApi.get().then((s) => setShippingMethods(s.shippingMethods))
+    const items = cart.getCartProducts()
+    setCartProducts(items)
+    if (!items.length) router.push('/cart')
+    setShippingMethods(settingsData.get().shippingMethods)
   }, [cart, router])
 
   const subtotal = useMemo(() => cartProducts.reduce((s, i) => s + i.product.price * (1 - i.product.discount / 100) * i.quantity, 0), [cartProducts])
@@ -60,7 +59,7 @@ export default function CheckoutPage() {
 
   async function placeOrder() {
     try {
-      const order = await orderApi.create(auth.user!.id, {
+      const order = await orderData.create(auth.user!.id, {
         items: cart.activeItems,
         shippingAddress: { id: 'checkout', label: 'Shipping', street: form.street, city: form.city, state: form.state, country: form.country, zipCode: form.zipCode, isDefault: false },
         deliveryMethod: form.deliveryMethod, paymentMethod: form.paymentMethod, couponCode: cart.couponCode || undefined,

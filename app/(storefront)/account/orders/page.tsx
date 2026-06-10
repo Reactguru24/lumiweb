@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { useQuery } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
 import { useAuthStore } from '@/lib/stores/auth'
-import { orderApi } from '@/lib/api/services'
+import { orderData } from '@/lib/data/services'
 import { formatCurrency, formatDate } from '@/lib/utils/storage'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -15,13 +15,9 @@ export default function AccountOrdersPage() {
   const auth = useAuthStore()
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'delivered' | 'cancelled'>('all')
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ['user-orders', auth.user?.id],
-    queryFn: () => orderApi.getByUser(auth.user!.id),
-    enabled: !!auth.user,
-  })
+  const orders = useLocalData(() => auth.user ? orderData.getByUser(auth.user.id) : [])
 
-  const filtered = orders ? (filter === 'all' ? orders : orders.filter((o) => o.status === filter)) : []
+  const filtered = filter === 'all' ? orders : orders.filter((o) => o.status === filter)
   const { page, totalPages, paginated, total, goTo, reset, pageSize } = usePagination(filtered, 8)
 
   return (
@@ -31,8 +27,7 @@ export default function AccountOrdersPage() {
           <button key={f} className={`px-4 py-2 text-sm capitalize whitespace-nowrap rounded-full transition-colors ${filter === f ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800'}`} onClick={() => { setFilter(f); reset() }}>{f}</button>
         ))}
       </div>
-      {isLoading ? <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-32" />)}</div>
-        : !filtered.length ? <EmptyState title="No orders yet" description="Your order history will appear here." />
+      {!filtered.length ? <EmptyState title="No orders yet" description="Your order history will appear here." />
         : (
           <>
             <div className="space-y-4">

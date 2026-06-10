@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, type ReactNode } from 'react'
+import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import {
@@ -14,14 +14,35 @@ import { SHOP_CATEGORIES, shopCategoryQuery, shopSubcategoryQuery } from '@/lib/
 import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 
+function accountHref(isAuthenticated: boolean, isCustomer: boolean, isVendor: boolean, isAdmin: boolean): string {
+  if (!isAuthenticated) return '/auth/login'
+  if (isCustomer) return '/account'
+  if (isVendor) return '/vendor'
+  if (isAdmin) return '/admin'
+  return '/auth/login'
+}
+
 export function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const auth = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hasHydrated = useAuthStore((s) => s.hasHydrated)
+  const user = useAuthStore((s) => s.user)
+  const isCustomer = useAuthStore((s) => s.isCustomer)
+  const isVendor = useAuthStore((s) => s.isVendor)
+  const isAdmin = useAuthStore((s) => s.isAdmin)
+  const logout = useAuthStore((s) => s.logout)
   const itemCount = useCartStore((s) => s.itemCount)
+  const showGuestLinks = hasHydrated && !isAuthenticated
+  const showAuthLinks = hasHydrated && isAuthenticated
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [megaMenuOpen, setMegaMenuOpen] = useState(false)
+
+  useEffect(() => {
+    router.prefetch('/auth/login')
+    router.prefetch('/auth/register')
+  }, [router])
 
   function search() {
     if (searchQuery.trim()) {
@@ -39,7 +60,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
   }
 
   async function handleLogout() {
-    await auth.logout()
+    await logout()
     router.push('/')
   }
 
@@ -100,11 +121,11 @@ export function MainLayout({ children }: { children: ReactNode }) {
 
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <AppearanceControls />
-              {auth.isAuthenticated ? (
+              {showAuthLinks ? (
                 <UserMenu />
-              ) : (
+              ) : showGuestLinks ? (
                 <Link href="/auth/login" className="hidden md:block text-sm font-medium">Sign In</Link>
-              )}
+              ) : null}
               <Link href="/cart" className="relative p-2">
                 <ShoppingBagIcon className="w-5 h-5" />
                 {itemCount > 0 && (
@@ -131,36 +152,39 @@ export function MainLayout({ children }: { children: ReactNode }) {
                 <button key={cat} className="block text-sm py-1 hover:underline" onClick={() => goToProducts(shopCategoryQuery(cat) as Record<string, string>)}>{cat}</button>
               ))}
             </div>
-            {!auth.isAuthenticated && (
+            {showGuestLinks && (
               <>
                 <Link href="/auth/login" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
                 <Link href="/auth/register" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Register</Link>
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-3 space-y-2">
-                  <Link href="/auth/login" className="block text-sm font-medium text-brand-teal dark:text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Vendor Login</Link>
-                  <Link href="/account/vendor-application" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Become a Vendor</Link>
-                </div>
+                <Link href="/auth/login?redirect=/account/vendor-application" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Apply to Sell</Link>
+                <p className="text-xs text-gray-500">Customer and vendor accounts are separate — sign out to switch roles.</p>
               </>
             )}
-            {auth.isAuthenticated && auth.user && (
+            {showAuthLinks && user && (
               <div className="border-t border-gray-200 dark:border-gray-800 pt-3 space-y-2">
                 <div className="flex items-center gap-3">
                   <span className="w-9 h-9 rounded-full bg-brand-teal dark:bg-brand-orange text-white text-xs font-semibold flex items-center justify-center shrink-0">
-                    {getInitials(auth.user.fullName)}
+                    {getInitials(user.fullName)}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{auth.user.fullName}</p>
+                    <p className="text-sm font-medium truncate">{user.fullName}</p>
                     <p className="text-xs text-green-600 dark:text-green-400">Signed in</p>
                   </div>
                 </div>
-                <Link href="/account" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-                {auth.isVendor && (
+                {isCustomer && (
+                  <>
+                    <Link href="/account" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+                    <Link href="/account/vendor-application" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Apply to Sell</Link>
+                  </>
+                )}
+                {isVendor && (
                   <Link href="/vendor" className="block text-sm font-medium text-brand-teal dark:text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Vendor Dashboard</Link>
                 )}
-                {auth.isAdmin && (
-                  <Link href="/admin" className="block text-sm font-medium text-brand-teal dark:text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>
+                {isCustomer && (
+                  <p className="text-xs text-gray-500">To access a vendor dashboard, sign out and sign in with your vendor account.</p>
                 )}
-                {auth.isCustomer && (
-                  <Link href="/account/vendor-application" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Become a Vendor</Link>
+                {isAdmin && (
+                  <Link href="/admin" className="block text-sm font-medium text-brand-teal dark:text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>
                 )}
                 <button className="block text-sm font-medium text-red-600" onClick={handleLogout}>Sign Out</button>
               </div>
@@ -171,15 +195,15 @@ export function MainLayout({ children }: { children: ReactNode }) {
 
       <main className="flex-1">{children}</main>
 
-      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400 py-12 mt-auto">
-        <div className="page-width grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
-          <div>
+      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-400 py-8 sm:py-12 mt-auto">
+        <div className="page-width grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+          <div className="col-span-2 md:col-span-1">
             <AppLogo light className="mb-4" />
-            <p className="text-sm">East Africa&apos;s premier fashion marketplace — shop Kenya, Uganda, Tanzania & beyond.</p>
+            <p className="text-xs sm:text-sm">East Africa&apos;s premier fashion marketplace — shop Kenya, Uganda, Tanzania & beyond.</p>
           </div>
           <div>
-            <h4 className="text-white font-medium mb-3">Shop</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="text-white font-medium mb-3 text-sm sm:text-base">Shop</h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li><Link href="/products" className="hover:text-white">All Products</Link></li>
               <li><Link href="/products?sort=newest" className="hover:text-white">New Arrivals</Link></li>
               <li><Link href="/products?trending=true" className="hover:text-white">Trending</Link></li>
@@ -187,8 +211,8 @@ export function MainLayout({ children }: { children: ReactNode }) {
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-medium mb-3">Support</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="text-white font-medium mb-3 text-sm sm:text-base">Support</h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
               <li>Fast Shipping</li>
               <li>Easy Returns</li>
               <li>M-Pesa Payments</li>
@@ -196,24 +220,27 @@ export function MainLayout({ children }: { children: ReactNode }) {
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-medium mb-3">Sell</h4>
-            <ul className="space-y-2 text-sm">
-              {!auth.isAuthenticated && (
-                <li><Link href="/account/vendor-application" className="hover:text-white">Become a Vendor</Link></li>
+            <h4 className="text-white font-medium mb-3 text-sm sm:text-base">Sell</h4>
+            <ul className="space-y-2 text-xs sm:text-sm">
+              {showGuestLinks && (
+                <li><Link href="/auth/login?redirect=/account/vendor-application" className="hover:text-white">Apply to Sell</Link></li>
               )}
-              {!auth.isAuthenticated && (
-                <li><Link href="/auth/login" className="hover:text-white">Vendor Login</Link></li>
-              )}
-              {auth.isVendor && (
+              {showAuthLinks && isVendor && (
                 <li><Link href="/vendor" className="hover:text-white">Vendor Dashboard</Link></li>
               )}
-              {auth.isCustomer && (
-                <li><Link href="/account/vendor-application" className="hover:text-white">Become a Vendor</Link></li>
+              {showAuthLinks && isAdmin && (
+                <li><Link href="/admin" className="hover:text-white">Admin Panel</Link></li>
+              )}
+              {showAuthLinks && isCustomer && (
+                <li><Link href="/account/vendor-application" className="hover:text-white">Apply to Sell</Link></li>
+              )}
+              {(showGuestLinks || (showAuthLinks && isCustomer)) && (
+                <li className="text-gray-500 text-[11px] leading-relaxed pt-1">Vendor and customer logins are separate. Sign out to switch.</li>
               )}
             </ul>
           </div>
         </div>
-        <div className="page-width mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+        <div className="page-width mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-800 text-center text-xs sm:text-sm">
           &copy; 2026 LumiAfrica. All rights reserved.
         </div>
       </footer>
@@ -232,7 +259,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
           <ShoppingBagIcon className={`w-5 h-5 ${activeNav.cart ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Cart
           {itemCount > 0 && <span className="absolute top-0.5 right-2 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{itemCount}</span>}
         </Link>
-        <Link href={auth.isAuthenticated ? auth.getDashboardRoute() : '/auth/login'} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.account)}`}>
+        <Link href={accountHref(isAuthenticated, isCustomer, isVendor, isAdmin)} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.account)}`}>
           <UserIcon className={`w-5 h-5 ${activeNav.account ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Account
         </Link>
       </nav>

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { CartItem, Product } from '@/lib/types'
-import { productApi } from '@/lib/api/services'
+import { productData } from '@/lib/data/services'
 import { getStorage, setStorage } from '@/lib/utils/storage'
 
 const CART_KEY = 'lumi_cart'
@@ -20,7 +20,7 @@ interface CartState {
   toggleSaveForLater: (productId: string, size: string, color: string) => void
   moveToCart: (productId: string, size: string, color: string) => void
   clearCart: () => void
-  getCartProducts: () => Promise<(CartItem & { product: Product })[]>
+  getCartProducts: () => (CartItem & { product: Product })[]
   toggleWishlist: (productId: string) => void
   isInWishlist: (productId: string) => boolean
   applyCoupon: (code: string, discount: number) => void
@@ -138,11 +138,11 @@ export const useCartStore = create<CartState>((set, get) => ({
     persist(items, get().wishlist)
   },
 
-  getCartProducts: async () => {
+  getCartProducts: () => {
     const result: (CartItem & { product: Product })[] = []
     for (const item of get().activeItems) {
       try {
-        const product = await productApi.getById(item.productId)
+        const product = productData.getById(item.productId)
         result.push({ ...item, product })
       } catch { /* skip missing */ }
     }

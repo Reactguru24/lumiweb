@@ -2,40 +2,39 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
-import { vendorApplicationApi, vendorApi } from '@/lib/api/services'
+import { vendorApplicationData, vendorData } from '@/lib/data/services'
 import { formatDate } from '@/lib/utils/storage'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { ResponsiveDataTable } from '@/components/common/ResponsiveDataTable'
 
 export default function AdminVendorsPage() {
-  const queryClient = useQueryClient()
   const [tab, setTab] = useState<'applications' | 'vendors'>('applications')
   const [reviewNote, setReviewNote] = useState('')
-  const { data: applications } = useQuery({ queryKey: ['vendor-apps'], queryFn: vendorApplicationApi.getAll })
-  const { data: vendors } = useQuery({ queryKey: ['admin-vendors'], queryFn: vendorApi.getAll })
+  const applications = useLocalData(() => vendorApplicationData.getAll())
+  const vendors = useLocalData(() => vendorData.getAll())
 
-  const vendorTableData = vendors?.map((v) => ({ id: v.id, storeName: v.storeName, logo: v.logo, location: `${v.city}, ${v.country}`, productCount: v.productCount, rating: v.rating })) ?? []
+  const vendorTableData = vendors.map((v) => ({ id: v.id, storeName: v.storeName, logo: v.logo, location: `${v.city}, ${v.country}`, productCount: v.productCount, rating: v.rating }))
 
-  async function approve(id: string) {
-    await vendorApplicationApi.approve(id)
+  function approve(id: string) {
+    vendorApplicationData.approve(id)
     toast.success('Vendor approved')
-    queryClient.invalidateQueries({ queryKey: ['vendor-apps'] })
-    queryClient.invalidateQueries({ queryKey: ['admin-vendors'] })
+    notifyLocalDataChange()
   }
 
-  async function reject(id: string) {
-    await vendorApplicationApi.reject(id, reviewNote || 'Application rejected')
+  function reject(id: string) {
+    vendorApplicationData.reject(id, reviewNote || 'Application rejected')
     toast.success('Application rejected')
     setReviewNote('')
-    queryClient.invalidateQueries({ queryKey: ['vendor-apps'] })
+    notifyLocalDataChange()
   }
 
-  async function suspend(id: string) {
-    await vendorApi.suspend(id)
+  function suspend(id: string) {
+    vendorData.suspend(id)
     toast.success('Vendor suspended')
-    queryClient.invalidateQueries({ queryKey: ['admin-vendors'] })
+    notifyLocalDataChange()
   }
 
   return (
@@ -47,7 +46,7 @@ export default function AdminVendorsPage() {
       </div>
       {tab === 'applications' ? (
         <div className="space-y-4">
-          {applications?.map((app) => (
+          {applications.map((app) => (
             <div key={app.id} className="card p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">

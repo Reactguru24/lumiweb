@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import {
   HomeIcon, UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
-  Cog6ToothIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon,
+  Cog6ToothIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon, SparklesIcon,
 } from '@heroicons/react/24/outline'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
 import { useAuthStore } from '@/lib/stores/auth'
@@ -15,6 +15,7 @@ const navItems = [
   { name: 'Dashboard', to: '/admin', icon: HomeIcon },
   { name: 'Users', to: '/admin/users', icon: UsersIcon },
   { name: 'Vendors', to: '/admin/vendors', icon: BuildingStorefrontIcon },
+  { name: 'Subscriptions', to: '/admin/subscriptions', icon: SparklesIcon },
   { name: 'Products', to: '/admin/products', icon: CubeIcon },
   { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon },
   { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon },

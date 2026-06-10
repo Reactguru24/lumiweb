@@ -1,23 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
-import { settingsApi } from '@/lib/api/services'
+import { settingsData } from '@/lib/data/services'
 
 export default function AdminSettingsPage() {
-  const queryClient = useQueryClient()
-  const { data: settings } = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get })
+  const settings = useLocalData(() => settingsData.get())
   const [form, setForm] = useState({ taxRate: 0.08, categories: [] as string[], brands: [] as string[], newCategory: '', newBrand: '' })
 
   useEffect(() => {
     if (settings) setForm({ taxRate: settings.taxRate, categories: [...settings.categories], brands: [...settings.brands], newCategory: '', newBrand: '' })
   }, [settings])
 
-  async function save() {
-    await settingsApi.update({ taxRate: form.taxRate, categories: form.categories, brands: form.brands })
+  function save() {
+    settingsData.update({ taxRate: form.taxRate, categories: form.categories, brands: form.brands })
     toast.success('Settings saved')
-    queryClient.invalidateQueries({ queryKey: ['settings'] })
+    notifyLocalDataChange()
   }
 
   function addCategory() {

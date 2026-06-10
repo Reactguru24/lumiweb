@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
-import { vendorApplicationApi } from '@/lib/api/services'
+import { vendorApplicationData } from '@/lib/data/services'
 import { vendorApplicationSchema } from '@/lib/utils/validation'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import type { VendorApplication } from '@/lib/types'
@@ -16,15 +16,20 @@ export default function VendorApplicationPage() {
   const [existing, setExisting] = useState<VendorApplication | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [form, setForm] = useState({
-    storeName: '', businessDescription: '',
+    storeName: '',
+    businessDescription: '',
     logo: 'https://images.unsplash.com/photo-1441984904996-e0b495a9b1da?w=100&h=100&fit=crop&q=80',
-    contactPhone: auth.user?.phone || '', businessEmail: auth.user?.email || '',
-    country: '', city: '', socialLinks: { instagram: '', twitter: '' },
-    registrationNumber: '', categories: [] as string[],
+    contactPhone: auth.user?.phone || '',
+    businessEmail: '',
+    country: '',
+    city: '',
+    socialLinks: { instagram: '', twitter: '' },
+    registrationNumber: '',
+    categories: [] as string[],
   })
 
   useEffect(() => {
-    if (auth.user) vendorApplicationApi.getByUserId(auth.user.id).then(setExisting)
+    if (auth.user) setExisting(vendorApplicationData.getByUserId(auth.user.id))
   }, [auth.user])
 
   function toggleCategory(cat: string) {
@@ -34,10 +39,10 @@ export default function VendorApplicationPage() {
     }))
   }
 
-  async function submit(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault()
     setErrors({})
-    const result = vendorApplicationSchema.safeParse(form)
+    const result = vendorApplicationSchema(auth.user?.email).safeParse(form)
     if (!result.success) {
       const next: Record<string, string> = {}
       result.error.issues.forEach((i) => { next[i.path[0] as string] = i.message })
@@ -45,8 +50,8 @@ export default function VendorApplicationPage() {
       return
     }
     try {
-      await vendorApplicationApi.submit(auth.user!.id, form)
-      setExisting(await vendorApplicationApi.getByUserId(auth.user!.id))
+      vendorApplicationData.submit(auth.user!.id, form)
+      setExisting(vendorApplicationData.getByUserId(auth.user!.id))
       toast.success('Application submitted!')
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Submission failed')
@@ -55,6 +60,11 @@ export default function VendorApplicationPage() {
 
   return (
     <div>
+      <p className="text-sm text-gray-500 mb-6">
+        Customer and vendor accounts are separate. Use a <strong>business email</strong> that is not{' '}
+        <strong>{auth.user?.email}</strong>. If approved, you will sign out and sign in with that vendor email to access the seller dashboard.
+      </p>
+
       {existing && (
         <div className="card p-6 mb-8">
           <h2 className="font-semibold mb-4">Application Status</h2>
@@ -63,7 +73,11 @@ export default function VendorApplicationPage() {
             <span className="text-sm text-gray-500">Submitted {new Date(existing.submittedAt).toLocaleDateString()}</span>
           </div>
           {existing.reviewNote && <p className="text-sm text-gray-500 mt-2">{existing.reviewNote}</p>}
-          {existing.status === 'approved' && <p className="text-sm text-green-600 mt-2">Congratulations! You are now a vendor. Please sign out and sign back in.</p>}
+          {existing.status === 'approved' && (
+            <p className="text-sm text-green-600 mt-2">
+              Your vendor login is <strong>{existing.businessEmail}</strong>. Sign out of this customer account, then sign in with your vendor email.
+            </p>
+          )}
         </div>
       )}
       {(!existing || existing.status === 'rejected') && (
@@ -71,7 +85,12 @@ export default function VendorApplicationPage() {
           <h2 className="font-semibold">Vendor Application</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div><label className="text-sm font-medium">Store Name</label><input value={form.storeName} onChange={(e) => setForm({ ...form, storeName: e.target.value })} className="input-field mt-1" />{errors.storeName && <p className="text-red-500 text-xs mt-1">{errors.storeName}</p>}</div>
-            <div><label className="text-sm font-medium">Business Email</label><input value={form.businessEmail} onChange={(e) => setForm({ ...form, businessEmail: e.target.value })} type="email" className="input-field mt-1" /></div>
+            <div>
+              <label className="text-sm font-medium">Business Email</label>
+              <input value={form.businessEmail} onChange={(e) => setForm({ ...form, businessEmail: e.target.value })} type="email" placeholder="store@yourbusiness.com" className="input-field mt-1" />
+              {errors.businessEmail && <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>}
+              <p className="text-xs text-gray-500 mt-1">Must be different from your customer email ({auth.user?.email})</p>
+            </div>
             <div className="md:col-span-2"><label className="text-sm font-medium">Business Description</label><textarea value={form.businessDescription} onChange={(e) => setForm({ ...form, businessDescription: e.target.value })} rows={3} className="input-field mt-1" />{errors.businessDescription && <p className="text-red-500 text-xs mt-1">{errors.businessDescription}</p>}</div>
             <div><label className="text-sm font-medium">Contact Phone</label><input value={form.contactPhone} onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} className="input-field mt-1" /></div>
             <div><label className="text-sm font-medium">Registration Number</label><input value={form.registrationNumber} onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })} className="input-field mt-1" /></div>

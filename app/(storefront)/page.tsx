@@ -2,10 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useQuery } from '@tanstack/react-query'
-import { productApi, vendorApi } from '@/lib/api/services'
+import { useLocalData } from '@/lib/data/hooks'
+import { productData, vendorData } from '@/lib/data/services'
 import { ProductCard } from '@/components/product/ProductCard'
-import { LoadingSkeleton } from '@/components/common/LoadingSkeleton'
 import { HeroSlider } from '@/components/common/HeroSlider'
 import { heroImage } from '@/lib/utils/images'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
@@ -27,11 +26,11 @@ const promos = [
 ]
 
 export default function HomePage() {
-  const { data: featured, isLoading: loadingFeatured } = useQuery({ queryKey: ['featured'], queryFn: productApi.getFeatured })
-  const { data: trending, isLoading: loadingTrending } = useQuery({ queryKey: ['trending'], queryFn: productApi.getTrending })
-  const { data: bestsellers, isLoading: loadingBest } = useQuery({ queryKey: ['bestsellers'], queryFn: productApi.getBestsellers })
-  const { data: newArrivals, isLoading: loadingNew } = useQuery({ queryKey: ['newArrivals'], queryFn: productApi.getNewArrivals })
-  const { data: topVendors } = useQuery({ queryKey: ['topVendors'], queryFn: () => vendorApi.getTop(6) })
+  const featured = useLocalData(() => productData.getFeatured())
+  const trending = useLocalData(() => productData.getTrending())
+  const bestsellers = useLocalData(() => productData.getBestsellers())
+  const newArrivals = useLocalData(() => productData.getNewArrivals())
+  const topVendors = useLocalData(() => vendorData.getTop(6))
 
   return (
     <div>
@@ -57,11 +56,9 @@ export default function HomePage() {
             View All <ChevronRightIcon className="w-4 h-4 ml-1" />
           </Link>
         </div>
-        {loadingFeatured ? <LoadingSkeleton /> : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {featured?.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {featured?.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
       </section>
       <section className="bg-brand-teal text-white py-16">
         <div className="page-width grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
@@ -82,44 +79,41 @@ export default function HomePage() {
       <section className="page-width py-8 sm:py-12">
         <p className="micro-label mb-1">What&apos;s hot</p>
         <h2 className="section-title mb-8">Trending in Kenya</h2>
-        {loadingTrending ? <LoadingSkeleton /> : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {trending?.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {trending?.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
       </section>
       <section className="page-width py-8 sm:py-12">
         <p className="micro-label mb-1">Customer favourites</p>
         <h2 className="section-title mb-8">Best Sellers</h2>
-        {loadingBest ? <LoadingSkeleton /> : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {bestsellers?.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {bestsellers?.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
       </section>
       <section className="bg-brand-50 dark:bg-gray-900 py-12">
         <div className="page-width">
           <p className="micro-label mb-1">Just landed</p>
           <h2 className="section-title mb-8">New Arrivals</h2>
-          {loadingNew ? <LoadingSkeleton /> : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {newArrivals?.map((p) => <ProductCard key={p.id} product={p} />)}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {newArrivals?.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
         </div>
       </section>
       <section className="page-width py-8 sm:py-12">
         <p className="micro-label mb-1">Shop local</p>
-        <h2 className="section-title mb-8">Top Vendors</h2>
+        <h2 className="section-title mb-2">Top Vendors</h2>
+        <p className="text-sm text-gray-500 mb-8">Featured East African sellers with an active storefront subscription</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {topVendors?.map((vendor) => (
+          {topVendors?.length ? topVendors.map((vendor) => (
             <Link key={vendor.id} href={`/products?vendorId=${vendor.id}`} className="card p-4 text-center group cursor-pointer hover:shadow-lg transition-shadow block">
               <Image src={vendor.logo} alt={vendor.storeName} width={64} height={64} className="w-16 h-16 rounded-full mx-auto mb-3 object-cover" />
               <h3 className="font-medium text-sm group-hover:underline">{vendor.storeName}</h3>
               <p className="text-xs text-gray-500 mt-1">{vendor.city}, {vendor.country}</p>
               <p className="text-xs text-gray-400">{vendor.productCount} products</p>
             </Link>
-          ))}
+          )) : (
+            <p className="col-span-full text-center text-gray-500 py-8">Featured vendors will appear here soon.</p>
+          )}
         </div>
       </section>
       <section className="page-width py-8 sm:py-12 mb-4 sm:mb-8">

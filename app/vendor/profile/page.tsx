@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
+import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
-import { vendorApi } from '@/lib/api/services'
+import { vendorData } from '@/lib/data/services'
 
 export default function VendorProfilePage() {
   const auth = useAuthStore()
-  const queryClient = useQueryClient()
-  const { data: vendor } = useQuery({ queryKey: ['my-vendor', auth.user?.id], queryFn: () => vendorApi.getByUserId(auth.user!.id) })
+  const vendor = useLocalData(() => auth.user ? vendorData.getByUserId(auth.user.id) : null)
   const [form, setForm] = useState({ storeName: '', description: '', contactPhone: '', businessEmail: '', country: '', city: '', socialLinks: { instagram: '', twitter: '' }, logo: '', banner: '' })
 
   useEffect(() => {
@@ -22,11 +22,11 @@ export default function VendorProfilePage() {
     })
   }, [vendor])
 
-  async function save(e: React.FormEvent) {
+  function save(e: React.FormEvent) {
     e.preventDefault()
     if (!vendor) return
-    await vendorApi.update(vendor.id, form)
-    queryClient.invalidateQueries({ queryKey: ['my-vendor'] })
+    vendorData.update(vendor.id, form)
+    notifyLocalDataChange()
     toast.success('Store profile updated')
   }
 

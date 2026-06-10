@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import type { User, UserRole } from '@/lib/types'
-import { authApi } from '@/lib/api/services'
+import { authData } from '@/lib/data/services'
 
 interface AuthState {
   user: Omit<User, 'password'> | null
   loading: boolean
+  hasHydrated: boolean
   isAuthenticated: boolean
   role: UserRole | null
   isCustomer: boolean
@@ -15,6 +16,7 @@ interface AuthState {
   register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<Omit<User, 'password'>>
   logout: () => Promise<void>
   refreshUser: () => void
+  setHasHydrated: (value: boolean) => void
   clearSession: () => void
   hasRole: (requiredRole: UserRole | UserRole[]) => boolean
   getDashboardRoute: () => string
@@ -24,12 +26,18 @@ interface AuthState {
 
 function deriveRole(user: Omit<User, 'password'> | null): UserRole | null {
   if (!user || user.disabled) return null
-  return user.role ?? null
+  const role = user.role ?? null
+  // Ensure only valid roles are returned
+  if (role && !['CUSTOMER', 'VENDOR', 'ADMIN'].includes(role)) {
+    return null
+  }
+  return role
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: false,
+  hasHydrated: false,
   isAuthenticated: false,
   role: null,
   isCustomer: false,
@@ -40,7 +48,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ loading: true })
     try {
-      const { user: loggedIn } = await authApi.login(email, password)
+      if (!email?.trim() || !password?.trim()) {
+        throw new Error('Email and password are required')
+      }
+      const { user: loggedIn } = await authData.login(email, password)
+      if (!loggedIn) throw new Error('Login failed - no user data')
       if (loggedIn.disabled) throw new Error('Account has been disabled')
       const role = deriveRole(loggedIn)
       set({
@@ -64,7 +76,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (data) => {
     set({ loading: true })
     try {
-      const { user: registered } = await authApi.register(data)
+      if (!data?.fullName?.trim() || !data?.email?.trim() || !data?.password?.trim()) {
+        throw new Error('All fields are required')
+      }
+      const { user: registered } = await authData.register(data)
+      if (!registered) throw new Error('Registration failed - no user data')
       if (registered.disabled) throw new Error('Account registration failed')
       const role = deriveRole(registered)
       set({
@@ -88,7 +104,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ loading: true })
     try {
-      await authApi.logout()
+      await authData.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
     } finally {
       set({
         user: null,
@@ -103,39 +121,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  setHasHydrated: (value) => set({ hasHydrated: value }),
+
   refreshUser: () => {
-    const currentUser = authApi.getCurrentUser()
-    const state = get()
+    try {
+      const currentUser = authData.getCurrentUser()
+      const state = get()
 
-    if (currentUser?.disabled) {
-      if (state.isAuthenticated || state.user) {
-        set({ user: null, isAuthenticated: false, role: null, isCustomer: false, isVendor: false, isAdmin: false })
+      if (currentUser?.disabled) {
+        if (state.isAuthenticated || state.user) {
+          set({ user: null, isAuthenticated: false, role: null, isCustomer: false, isVendor: false, isAdmin: false })
+        }
+        return
       }
-      return
+
+      const role = deriveRole(currentUser)
+      const userId = currentUser?.id ?? null
+      const stateUserId = state.user?.id ?? null
+
+      if (
+        userId === stateUserId &&
+        !!currentUser === state.isAuthenticated &&
+        role === state.role &&
+        (currentUser?.disabled ?? false) === state.isDisabled
+      ) {
+        return
+      }
+
+      set({
+        user: currentUser ?? null,
+        isAuthenticated: !!currentUser,
+        role,
+        isCustomer: role === 'CUSTOMER',
+        isVendor: role === 'VENDOR',
+        isAdmin: role === 'ADMIN',
+        isDisabled: currentUser?.disabled ?? false,
+      })
+    } catch (error) {
+      console.error('Failed to refresh user:', error)
+      // On error, keep current state to prevent flash of logout
     }
-
-    const role = deriveRole(currentUser)
-    const userId = currentUser?.id ?? null
-    const stateUserId = state.user?.id ?? null
-
-    if (
-      userId === stateUserId &&
-      !!currentUser === state.isAuthenticated &&
-      role === state.role &&
-      (currentUser?.disabled ?? false) === state.isDisabled
-    ) {
-      return
-    }
-
-    set({
-      user: currentUser,
-      isAuthenticated: !!currentUser,
-      role,
-      isCustomer: role === 'CUSTOMER',
-      isVendor: role === 'VENDOR',
-      isAdmin: role === 'ADMIN',
-      isDisabled: currentUser?.disabled ?? false,
-    })
   },
 
   clearSession: () => {
@@ -150,7 +175,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   getDashboardRoute: () => {
-    switch (get().role) {
+    const currentRole = get().role
+    switch (currentRole) {
       case 'ADMIN': return '/admin'
       case 'VENDOR': return '/vendor'
       case 'CUSTOMER': return '/'
@@ -164,7 +190,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const baseRoutes = ['/', '/products', '/cart']
     switch (role) {
       case 'ADMIN': return [...baseRoutes, '/admin']
-      case 'VENDOR': return [...baseRoutes, '/account', '/vendor']
+      case 'VENDOR': return [...baseRoutes, '/vendor']
       case 'CUSTOMER': return [...baseRoutes, '/account']
       default: return baseRoutes
     }
@@ -173,6 +199,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   canAccessRoute: (requiredRoles) => {
     const { isAuthenticated, role } = get()
     if (!isAuthenticated || !role) return false
-    return requiredRoles.includes(role)
+    return Array.isArray(requiredRoles) ? requiredRoles.includes(role) : requiredRoles === role
   },
 }))

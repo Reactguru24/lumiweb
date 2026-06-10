@@ -18,16 +18,24 @@ export const registerSchema = z
     path: ['confirmPassword'],
   })
 
-export const vendorApplicationSchema = z.object({
-  storeName: z.string().min(2, 'Store name required'),
-  businessDescription: z.string().min(20, 'Description must be at least 20 characters'),
-  contactPhone: z.string().min(10, 'Valid phone required'),
-  businessEmail: z.string().email('Invalid email'),
-  country: z.string().min(2, 'Country required'),
-  city: z.string().min(2, 'City required'),
-  registrationNumber: z.string().min(5, 'Registration number required'),
-  categories: z.array(z.string()).min(1, 'Select at least one category'),
-})
+export function vendorApplicationSchema(customerEmail?: string) {
+  return z.object({
+    storeName: z.string().min(2, 'Store name required'),
+    businessDescription: z.string().min(20, 'Description must be at least 20 characters'),
+    contactPhone: z.string().min(10, 'Valid phone required'),
+    businessEmail: z
+      .string()
+      .email('Invalid email')
+      .refine(
+        (email) => !customerEmail || email.toLowerCase() !== customerEmail.toLowerCase(),
+        'Use a business email different from your customer account',
+      ),
+    country: z.string().min(2, 'Country required'),
+    city: z.string().min(2, 'City required'),
+    registrationNumber: z.string().min(5, 'Registration number required'),
+    categories: z.array(z.string()).min(1, 'Select at least one category'),
+  })
+}
 
 export const productSchema = z.object({
   name: z.string().min(2, 'Product name required'),
@@ -56,6 +64,6 @@ export const checkoutShippingSchema = z.object({
 
 export type LoginForm = z.infer<typeof loginSchema>
 export type RegisterForm = z.infer<typeof registerSchema>
-export type VendorApplicationForm = z.infer<typeof vendorApplicationSchema>
+export type VendorApplicationForm = z.infer<ReturnType<typeof vendorApplicationSchema>>
 export type ProductForm = z.infer<typeof productSchema>
 export type CheckoutShippingForm = z.infer<typeof checkoutShippingSchema>

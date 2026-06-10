@@ -1,16 +1,16 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
 import { useAuthStore } from '@/lib/stores/auth'
-import { vendorApi, analyticsApi } from '@/lib/api/services'
+import { vendorData, analyticsData } from '@/lib/data/services'
 import { formatCurrency } from '@/lib/utils/storage'
 import { LineChart } from '@/components/charts/LineChart'
 import { BarChart } from '@/components/charts/BarChart'
 
 export default function VendorAnalyticsPage() {
   const auth = useAuthStore()
-  const { data: vendor } = useQuery({ queryKey: ['my-vendor', auth.user?.id], queryFn: () => vendorApi.getByUserId(auth.user!.id) })
-  const { data: analytics } = useQuery({ queryKey: ['vendor-analytics', vendor?.id], queryFn: () => analyticsApi.getVendorAnalytics(vendor!.id), enabled: !!vendor?.id })
+  const vendor = useLocalData(() => auth.user ? vendorData.getByUserId(auth.user.id) : null)
+  const analytics = useLocalData(() => vendor ? analyticsData.getVendorAnalytics(vendor.id) : null)
 
   if (!analytics) return null
 

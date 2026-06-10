@@ -1,21 +1,20 @@
 'use client'
 
 import Image from 'next/image'
-import { useQuery } from '@tanstack/react-query'
+import { useLocalData } from '@/lib/data/hooks'
 import { useAuthStore } from '@/lib/stores/auth'
-import { vendorApi, analyticsApi } from '@/lib/api/services'
+import { vendorData, analyticsData } from '@/lib/data/services'
 import { formatCurrency } from '@/lib/utils/storage'
 
 export default function VendorInventoryPage() {
   const auth = useAuthStore()
-  const { data: vendor } = useQuery({ queryKey: ['my-vendor', auth.user?.id], queryFn: () => vendorApi.getByUserId(auth.user!.id) })
-  const { data: analytics, isLoading } = useQuery({ queryKey: ['vendor-analytics', vendor?.id], queryFn: () => analyticsApi.getVendorAnalytics(vendor!.id), enabled: !!vendor?.id })
+  const vendor = useLocalData(() => auth.user ? vendorData.getByUserId(auth.user.id) : null)
+  const analytics = useLocalData(() => vendor ? analyticsData.getVendorAnalytics(vendor.id) : null)
 
   return (
     <div>
       <h1 className="text-xl sm:text-2xl font-semibold mb-6">Inventory Management</h1>
-      {isLoading ? <div className="grid md:grid-cols-2 gap-4">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-40" />)}</div>
-        : analytics && (
+      {analytics && (
           <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
             <div className="card p-4 sm:p-6">
               <h2 className="font-semibold text-red-600 mb-4 text-sm sm:text-base">Low Stock (≤10)</h2>
@@ -55,7 +54,7 @@ export default function VendorInventoryPage() {
               </div>
             </div>
           </div>
-        )}
+      )}
     </div>
   )
 }

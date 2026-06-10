@@ -1,9 +1,13 @@
+/** Local hardcoded data layer — reads/writes in-memory seed + localStorage. No HTTP requests. */
 import type {
   AppData, User, Product, ProductFilters, Vendor, VendorApplication,
   Order, Review, OrderStatus, ProductStatus, CartItem, PlatformSettings,
+  FeaturedListingPlan, VendorSubscription,
 } from '@/lib/types'
 import { getDatabase, persist } from './database'
-import { delay, generateId, getSessionKey, setStorage, slugify } from '@/lib/utils/storage'
+import { getFeaturedListingPlan } from '@/lib/constants/subscriptions'
+import { isFeaturedListingActive } from '@/lib/utils/subscriptions'
+import { generateId, getSessionKey, setStorage, slugify } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES, STANDARD_SHIPPING_KES } from '@/lib/constants/commerce'
 import { clothingImage, storeBannerImage } from '@/lib/utils/images'
 
@@ -15,9 +19,8 @@ function save(): void {
   persist()
 }
 
-export const authApi = {
-  async login(email: string, password: string) {
-    await delay()
+export const authData = {
+  login(email: string, password: string) {
     const user = db().users.find((u) => u.email === email && u.password === password && !u.disabled)
     if (!user) throw new Error('Invalid email or password')
     const session = { userId: user.id, token: generateId(), expiresAt: new Date(Date.now() + 86400000).toISOString() }
@@ -28,8 +31,7 @@ export const authApi = {
     return { user: safeUser, session }
   },
 
-  async register(data: { fullName: string; email: string; phone: string; password: string }) {
-    await delay()
+  register(data: { fullName: string; email: string; phone: string; password: string }) {
     if (db().users.some((u) => u.email === data.email)) throw new Error('Email already registered')
     const user: User = {
       id: generateId(),
@@ -50,8 +52,7 @@ export const authApi = {
     return { user: safeUser, session }
   },
 
-  async logout() {
-    await delay(100)
+  logout() {
     localStorage.removeItem(getSessionKey())
   },
 
@@ -65,9 +66,8 @@ export const authApi = {
   },
 }
 
-export const productApi = {
-  async getAll(filters: ProductFilters = {}) {
-    await delay()
+export const productData = {
+  getAll(filters: ProductFilters = {}) {
     let products = [...db().products]
 
     if (filters.status) {
@@ -109,35 +109,29 @@ export const productApi = {
     return products
   },
 
-  async getById(id: string) {
-    await delay()
+  getById(id: string) {
     const product = db().products.find((p) => p.id === id)
     if (!product) throw new Error('Product not found')
     return product
   },
 
-  async getFeatured() {
-    await delay()
+  getFeatured() {
     return db().products.filter((p) => p.status === 'active' && p.featured).slice(0, 8)
   },
 
-  async getTrending() {
-    await delay()
+  getTrending() {
     return db().products.filter((p) => p.status === 'active' && p.trending).slice(0, 8)
   },
 
-  async getBestsellers() {
-    await delay()
+  getBestsellers() {
     return db().products.filter((p) => p.status === 'active' && p.bestseller).slice(0, 8)
   },
 
-  async getNewArrivals() {
-    await delay()
+  getNewArrivals() {
     return db().products.filter((p) => p.status === 'active' && p.newArrival).slice(0, 8)
   },
 
-  async create(vendorId: string, data: Partial<Product>) {
-    await delay()
+  create(vendorId: string, data: Partial<Product>) {
     const product: Product = {
       id: generateId(),
       vendorId,
@@ -171,8 +165,7 @@ export const productApi = {
     return product
   },
 
-  async update(id: string, data: Partial<Product>) {
-    await delay()
+  update(id: string, data: Partial<Product>) {
     const idx = db().products.findIndex((p) => p.id === id)
     if (idx === -1) throw new Error('Product not found')
     db().products[idx] = { ...db().products[idx], ...data }
@@ -180,45 +173,46 @@ export const productApi = {
     return db().products[idx]
   },
 
-  async delete(id: string) {
-    await delay()
+  delete(id: string) {
     const idx = db().products.findIndex((p) => p.id === id)
     if (idx === -1) throw new Error('Product not found')
     db().products.splice(idx, 1)
     save()
   },
 
-  async moderate(id: string, status: ProductStatus) {
-    await delay()
-    return productApi.update(id, { status })
+  moderate(id: string, status: ProductStatus) {
+    return productData.update(id, { status })
   },
 }
 
-export const vendorApi = {
-  async getAll() {
-    await delay()
+export const vendorData = {
+  getAll() {
     return db().vendors.filter((v) => !v.suspended)
   },
 
-  async getTop(limit = 6) {
-    await delay()
-    return [...db().vendors].filter((v) => !v.suspended).sort((a, b) => b.totalSales - a.totalSales).slice(0, limit)
+  getTop(limit = 6) {
+    const featuredIds = new Set(
+      db().vendorSubscriptions
+        .filter((s) => isFeaturedListingActive(s))
+        .map((s) => s.vendorId)
+    )
+    return [...db().vendors]
+      .filter((v) => !v.suspended && featuredIds.has(v.id))
+      .sort((a, b) => b.totalSales - a.totalSales)
+      .slice(0, limit)
   },
 
-  async getById(id: string) {
-    await delay()
+  getById(id: string) {
     const vendor = db().vendors.find((v) => v.id === id)
     if (!vendor) throw new Error('Vendor not found')
     return vendor
   },
 
-  async getByUserId(userId: string) {
-    await delay()
+  getByUserId(userId: string) {
     return db().vendors.find((v) => v.userId === userId) || null
   },
 
-  async update(id: string, data: Partial<Vendor>) {
-    await delay()
+  update(id: string, data: Partial<Vendor>) {
     const idx = db().vendors.findIndex((v) => v.id === id)
     if (idx === -1) throw new Error('Vendor not found')
     db().vendors[idx] = { ...db().vendors[idx], ...data }
@@ -226,16 +220,72 @@ export const vendorApi = {
     return db().vendors[idx]
   },
 
-  async suspend(id: string) {
-    await delay()
+  suspend(id: string) {
     const vendor = db().vendors.find((v) => v.id === id)
     if (vendor) { vendor.suspended = true; save() }
   },
 }
 
-export const vendorApplicationApi = {
-  async submit(userId: string, data: Omit<VendorApplication, 'id' | 'userId' | 'status' | 'riskStatus' | 'submittedAt'>) {
-    await delay()
+function addMonths(date: Date, months: number): Date {
+  const next = new Date(date)
+  next.setMonth(next.getMonth() + months)
+  return next
+}
+
+export const vendorSubscriptionData = {
+  getByVendorId(vendorId: string) {
+    return db().vendorSubscriptions
+      .filter((s) => s.vendorId === vendorId)
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+  },
+
+  getActive(vendorId: string) {
+    return db().vendorSubscriptions.find((s) => s.vendorId === vendorId && isFeaturedListingActive(s)) ?? null
+  },
+
+  subscribe(vendorId: string, planId: FeaturedListingPlan, paymentMethod: string) {
+    const vendor = db().vendors.find((v) => v.id === vendorId)
+    if (!vendor) throw new Error('Vendor not found')
+    if (vendor.suspended) throw new Error('Suspended vendors cannot subscribe')
+
+    const plan = getFeaturedListingPlan(planId)
+    const existing = vendorSubscriptionData.getActive(vendorId)
+    const now = new Date()
+    const startDate = existing && new Date(existing.expiresAt) > now
+      ? new Date(existing.expiresAt)
+      : now
+
+    if (existing) {
+      existing.active = false
+    }
+
+    const subscription: VendorSubscription = {
+      id: generateId(),
+      vendorId,
+      plan: plan.id,
+      amountPaid: plan.priceKes,
+      startedAt: now.toISOString(),
+      expiresAt: addMonths(startDate, plan.durationMonths).toISOString(),
+      active: true,
+      paymentMethod,
+    }
+
+    db().vendorSubscriptions.push(subscription)
+    save()
+    return subscription
+  },
+}
+
+export const vendorApplicationData = {
+  submit(userId: string, data: Omit<VendorApplication, 'id' | 'userId' | 'status' | 'riskStatus' | 'submittedAt'>) {
+    const applicant = db().users.find((u) => u.id === userId)
+    const businessEmail = data.businessEmail.trim().toLowerCase()
+    if (applicant && applicant.email.toLowerCase() === businessEmail) {
+      throw new Error('Business email must be different from your customer account email')
+    }
+    if (db().users.some((u) => u.email.toLowerCase() === businessEmail)) {
+      throw new Error('This business email is already registered')
+    }
     const existing = db().vendorApplications.find((a) => a.userId === userId && a.status === 'pending')
     if (existing) throw new Error('You already have a pending application')
     const app: VendorApplication = {
@@ -251,27 +301,45 @@ export const vendorApplicationApi = {
     return app
   },
 
-  async getByUserId(userId: string) {
-    await delay()
+  getByUserId(userId: string) {
     return db().vendorApplications.find((a) => a.userId === userId) || null
   },
 
-  async getAll() {
-    await delay()
+  getAll() {
     return db().vendorApplications
   },
 
-  async approve(id: string) {
-    await delay()
+  approve(id: string) {
     const app = db().vendorApplications.find((a) => a.id === id)
     if (!app) throw new Error('Application not found')
+    const businessEmail = app.businessEmail.trim().toLowerCase()
+    const applicant = db().users.find((u) => u.id === app.userId)
+    if (applicant && applicant.email.toLowerCase() === businessEmail) {
+      throw new Error('Business email must differ from the customer account email')
+    }
+    if (db().users.some((u) => u.email.toLowerCase() === businessEmail)) {
+      throw new Error('Business email is already registered')
+    }
+
+    const vendorUser: User = {
+      id: generateId(),
+      fullName: app.storeName,
+      email: app.businessEmail,
+      phone: app.contactPhone,
+      password: 'vendor123',
+      role: 'VENDOR',
+      disabled: false,
+      createdAt: new Date().toISOString(),
+      addresses: [],
+    }
+    db().users.push(vendorUser)
+
     app.status = 'approved'
     app.reviewedAt = new Date().toISOString()
-    const user = db().users.find((u) => u.id === app.userId)
-    if (user) user.role = 'VENDOR'
+    app.reviewNote = `Vendor account created. Sign out of your customer account, then sign in with ${app.businessEmail} (demo password: vendor123).`
     const vendor: Vendor = {
       id: generateId(),
-      userId: app.userId,
+      userId: vendorUser.id,
       storeName: app.storeName,
       slug: slugify(app.storeName),
       description: app.businessDescription,
@@ -294,8 +362,7 @@ export const vendorApplicationApi = {
     return app
   },
 
-  async reject(id: string, note?: string) {
-    await delay()
+  reject(id: string, note?: string) {
     const app = db().vendorApplications.find((a) => a.id === id)
     if (!app) throw new Error('Application not found')
     app.status = 'rejected'
@@ -306,24 +373,20 @@ export const vendorApplicationApi = {
   },
 }
 
-export const orderApi = {
-  async getByUser(userId: string) {
-    await delay()
+export const orderData = {
+  getByUser(userId: string) {
     return db().orders.filter((o) => o.userId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   },
 
-  async getByVendor(vendorId: string) {
-    await delay()
+  getByVendor(vendorId: string) {
     return db().orders.filter((o) => o.items.some((i) => i.vendorId === vendorId))
   },
 
-  async getAll() {
-    await delay()
+  getAll() {
     return db().orders
   },
 
-  async create(userId: string, data: { items: CartItem[]; shippingAddress: Order['shippingAddress']; deliveryMethod: string; paymentMethod: string; couponCode?: string }) {
-    await delay()
+  create(userId: string, data: { items: CartItem[]; shippingAddress: Order['shippingAddress']; deliveryMethod: string; paymentMethod: string; couponCode?: string }) {
     const orderItems = data.items.map((item) => {
       const product = db().products.find((p) => p.id === item.productId)!
       return {
@@ -370,8 +433,7 @@ export const orderApi = {
     return order
   },
 
-  async updateStatus(id: string, status: OrderStatus) {
-    await delay()
+  updateStatus(id: string, status: OrderStatus) {
     const order = db().orders.find((o) => o.id === id)
     if (!order) throw new Error('Order not found')
     order.status = status
@@ -381,20 +443,17 @@ export const orderApi = {
   },
 }
 
-export const reviewApi = {
-  async getByProduct(productId: string) {
-    await delay()
+export const reviewData = {
+  getByProduct(productId: string) {
     return db().reviews.filter((r) => r.productId === productId)
   },
 
-  async getByVendor(vendorId: string) {
-    await delay()
+  getByVendor(vendorId: string) {
     const productIds = db().products.filter((p) => p.vendorId === vendorId).map((p) => p.id)
     return db().reviews.filter((r) => productIds.includes(r.productId))
   },
 
-  async reply(reviewId: string, reply: string) {
-    await delay()
+  reply(reviewId: string, reply: string) {
     const review = db().reviews.find((r) => r.id === reviewId)
     if (!review) throw new Error('Review not found')
     review.vendorReply = reply
@@ -402,8 +461,7 @@ export const reviewApi = {
     return review
   },
 
-  async create(data: { productId: string; userId: string; userName: string; rating: number; comment: string }) {
-    await delay()
+  create(data: { productId: string; userId: string; userName: string; rating: number; comment: string }) {
     const review: Review = { id: generateId(), ...data, createdAt: new Date().toISOString() }
     db().reviews.push(review)
     const product = db().products.find((p) => p.id === data.productId)
@@ -417,14 +475,12 @@ export const reviewApi = {
   },
 }
 
-export const userApi = {
-  async getAll() {
-    await delay()
+export const userData = {
+  getAll() {
     return db().users.map(({ password, ...u }) => u)
   },
 
-  async update(id: string, data: Partial<User>) {
-    await delay()
+  update(id: string, data: Partial<User>) {
     const idx = db().users.findIndex((u) => u.id === id)
     if (idx === -1) throw new Error('User not found')
     db().users[idx] = { ...db().users[idx], ...data }
@@ -433,29 +489,25 @@ export const userApi = {
     return safe
   },
 
-  async disable(id: string) {
-    await delay()
-    return userApi.update(id, { disabled: true })
+  disable(id: string) {
+    return userData.update(id, { disabled: true })
   },
 }
 
-export const settingsApi = {
-  async get() {
-    await delay()
+export const settingsData = {
+  get() {
     return db().settings
   },
 
-  async update(data: Partial<PlatformSettings>) {
-    await delay()
+  update(data: Partial<PlatformSettings>) {
     db().settings = { ...db().settings, ...data }
     save()
     return db().settings
   },
 }
 
-export const analyticsApi = {
-  async getAdminAnalytics() {
-    await delay()
+export const analyticsData = {
+  getAdminAnalytics() {
     const orders = db().orders.filter((o) => o.status !== 'cancelled')
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     return {
@@ -480,8 +532,7 @@ export const analyticsApi = {
     }
   },
 
-  async getVendorAnalytics(vendorId: string) {
-    await delay()
+  getVendorAnalytics(vendorId: string) {
     const orders = db().orders.filter((o) => o.items.some((i) => i.vendorId === vendorId) && o.status !== 'cancelled')
     const products = db().products.filter((p) => p.vendorId === vendorId)
     const revenue = orders.reduce((s, o) => {

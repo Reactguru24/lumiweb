@@ -28,6 +28,19 @@ export interface Address {
   isDefault: boolean
 }
 
+export type FeaturedListingPlan = 'monthly' | 'quarterly' | 'biannual' | 'yearly'
+
+export interface VendorSubscription {
+  id: string
+  vendorId: string
+  plan: FeaturedListingPlan
+  amountPaid: number
+  startedAt: string
+  expiresAt: string
+  active: boolean
+  paymentMethod: string
+}
+
 export interface Vendor {
   id: string
   userId: string
@@ -196,6 +209,7 @@ export interface AnalyticsData {
 export interface AppData {
   users: User[]
   vendors: Vendor[]
+  vendorSubscriptions: VendorSubscription[]
   vendorApplications: VendorApplication[]
   products: Product[]
   reviews: Review[]

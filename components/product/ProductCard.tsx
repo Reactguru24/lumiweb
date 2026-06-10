@@ -19,7 +19,7 @@ export function ProductCard({ product, listView = false }: ProductCardProps) {
   const inWishlist = isInWishlist(product.id)
 
   return (
-    <div className={`group relative animate-fade-in ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 card p-3 sm:p-4' : ''}`}>
+    <div className={`group relative ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 card p-3 sm:p-4' : ''}`}>
       <Link href={`/products/${product.id}`} className={`block overflow-hidden ${listView ? 'w-full sm:w-32 shrink-0' : ''}`}>
         <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 dark:bg-gray-800">
           <Image

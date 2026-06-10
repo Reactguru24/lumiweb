@@ -8,7 +8,7 @@ const links = [
   { to: '/account', label: 'Profile' },
   { to: '/account/orders', label: 'Orders' },
   { to: '/account/wishlist', label: 'Wishlist' },
-  { to: '/account/vendor-application', label: 'Become a Vendor' },
+  { to: '/account/vendor-application', label: 'Apply to Sell' },
 ]
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
-import { userApi } from '@/lib/api/services'
+import { userData } from '@/lib/data/services'
 
 export default function AccountProfilePage() {
   const auth = useAuthStore()
@@ -12,7 +12,7 @@ export default function AccountProfilePage() {
 
   async function saveProfile() {
     if (!auth.user) return
-    await userApi.update(auth.user.id, form)
+    await userData.update(auth.user.id, form)
     auth.refreshUser()
     toast.success('Profile updated')
   }
@@ -20,7 +20,7 @@ export default function AccountProfilePage() {
   async function changePassword() {
     if (passwordForm.newPassword !== passwordForm.confirm) { toast.error('Passwords do not match'); return }
     if (!auth.user) return
-    await userApi.update(auth.user.id, { password: passwordForm.newPassword })
+    await userData.update(auth.user.id, { password: passwordForm.newPassword })
     setPasswordForm({ newPassword: '', confirm: '' })
     toast.success('Password updated')
   }

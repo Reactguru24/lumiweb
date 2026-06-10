@@ -1,7 +1,7 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { analyticsApi } from '@/lib/api/services'
+import { useLocalData } from '@/lib/data/hooks'
+import { analyticsData } from '@/lib/data/services'
 import { formatCurrency } from '@/lib/utils/storage'
 import { StatCard } from '@/components/common/StatCard'
 import { LineChart } from '@/components/charts/LineChart'
@@ -9,14 +9,13 @@ import { BarChart } from '@/components/charts/BarChart'
 import { UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
 
 export default function AdminDashboardPage() {
-  const { data: analytics, isLoading } = useQuery({ queryKey: ['admin-analytics'], queryFn: analyticsApi.getAdminAnalytics })
+  const analytics = useLocalData(() => analyticsData.getAdminAnalytics())
 
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-2">Platform Dashboard</h1>
       <p className="text-gray-500 text-sm mb-8">Enterprise overview of marketplace performance.</p>
-      {isLoading ? <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">{[1, 2, 3, 4, 5].map((i) => <div key={i} className="skeleton h-28" />)}</div>
-        : analytics && (
+      {analytics && (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <StatCard title="Total Users" value={analytics.totalUsers} icon={UsersIcon} />
@@ -40,7 +39,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </>
-        )}
+      )}
     </div>
   )
 }
