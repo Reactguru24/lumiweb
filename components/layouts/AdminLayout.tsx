@@ -35,8 +35,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RouteGuard requiresAuth roles={['ADMIN']}>
       <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950">
-        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform transition-transform lg:translate-x-0 lg:static ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <aside className={`fixed inset-y-0 left-0 z-50 w-64 h-screen bg-gray-900 text-white transform transition-transform lg:translate-x-0 lg:static lg:sticky lg:top-0 lg:h-screen overflow-y-auto ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-800 sticky top-0 bg-gray-900">
             <span className="font-display text-xl font-bold tracking-tight text-white">LumiAfrica Admin</span>
             <button className="lg:hidden text-white" onClick={() => setSidebarOpen(false)}><XMarkIcon className="w-5 h-5" /></button>
           </div>
@@ -52,7 +52,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+          <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
             <button className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 w-full" onClick={logout}>
               <ArrowLeftOnRectangleIcon className="w-5 h-5" /> Sign Out
             </button>

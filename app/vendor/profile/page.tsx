@@ -42,11 +42,11 @@ export default function VendorProfilePage() {
       <h1 className="text-2xl font-semibold mb-6">Store Settings</h1>
       <form className="card p-6 space-y-6 max-w-2xl" onSubmit={save}>
         <div className="flex items-center gap-4">
-          <Image src={form.logo} alt="Logo" width={80} height={80} className="w-20 h-20 rounded-full object-cover" />
+          {form.logo ? <Image src={form.logo} alt="Logo" width={80} height={80} className="w-20 h-20 rounded-full object-cover" /> : <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">Logo</div>}
           <button type="button" className="btn-secondary text-sm py-2" onClick={() => mockUpload('logo')}>Change Logo</button>
         </div>
         <div>
-          <Image src={form.banner} alt="Banner" width={800} height={128} className="w-full h-32 object-cover" />
+          {form.banner ? <Image src={form.banner} alt="Banner" width={800} height={128} className="w-full h-32 object-cover" /> : <div className="w-full h-32 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400">Banner</div>}
           <button type="button" className="btn-secondary text-sm py-2 mt-2" onClick={() => mockUpload('banner')}>Change Banner</button>
         </div>
         <div><label className="text-sm font-medium">Store Name</label><input value={form.storeName} onChange={(e) => setForm({ ...form, storeName: e.target.value })} className="input-field mt-1" /></div>

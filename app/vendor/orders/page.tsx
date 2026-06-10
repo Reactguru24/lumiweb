@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useLocalData } from '@/lib/data/hooks'
+import { useLocalData, useHydration } from '@/lib/data/hooks'
 import { notifyLocalDataChange } from '@/lib/data/events'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'

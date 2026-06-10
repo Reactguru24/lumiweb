@@ -233,6 +233,11 @@ function addMonths(date: Date, months: number): Date {
 }
 
 export const vendorSubscriptionData = {
+  getAll() {
+    return db().vendorSubscriptions
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+  },
+
   getByVendorId(vendorId: string) {
     return db().vendorSubscriptions
       .filter((s) => s.vendorId === vendorId)
